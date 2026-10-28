@@ -33,6 +33,8 @@ public class SecurityConfig {
 			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 			.authorizeHttpRequests(a -> a
+				// El despacho de errores (403/404/...) se re-enruta a /error sin autenticacion: sin esto un 403 se vuelve 401.
+				.requestMatchers("/error").permitAll()
 				.requestMatchers("/api/auth/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/hotel/**", "/api/rooms/**").permitAll()
 				.requestMatchers("/api/admin/**").hasRole("ADMIN")
