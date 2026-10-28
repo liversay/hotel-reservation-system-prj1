@@ -10,4 +10,7 @@ public interface ReservationService {
 	ReservationDTO create(String username, ReservationRequest request);
 
 	List<ReservationDTO> findMine(String username);
+
+	/** Cancela y reembolsa pagos. Solo el dueno o un ADMIN; no se puede cancelar una estancia ya iniciada. */
+	ReservationDTO cancel(String username, boolean isAdmin, Long reservationId);
 }

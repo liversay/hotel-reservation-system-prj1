@@ -97,6 +97,28 @@ public class ReservationServiceImp implements ReservationService {
 				.map(ReservationServiceImp::toDTO).toList();
 	}
 
+	@Override
+	@Transactional
+	public ReservationDTO cancel(String username, boolean isAdmin, Long id) {
+		Reservation r = reservationRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada: " + id));
+		// 404 (no 403) para no revelar la existencia de reservas ajenas.
+		if (!isAdmin && !r.getUser().getUsername().equals(username)) {
+			throw new ResourceNotFoundException("Reserva no encontrada: " + id);
+		}
+		if ("CANCELLED".equals(r.getStatus())) {
+			throw new ConflictException("La reserva ya esta cancelada");
+		}
+		if (!r.getStartDate().toLocalDate().isAfter(LocalDate.now())) {
+			throw new BadRequestException("No se puede cancelar una reserva ya iniciada o pasada");
+		}
+		r.setStatus("CANCELLED");
+		if (r.getPayments() != null) {
+			r.getPayments().stream().filter(p -> "PAID".equals(p.getStatus())).forEach(p -> p.setStatus("REFUNDED"));
+		}
+		return toDTO(reservationRepository.save(r));
+	}
+
 	static ReservationDTO toDTO(Reservation r) {
 		return ReservationDTO.builder().id(r.getId()).startDate(r.getStartDate()).endDate(r.getEndDate())
 				.status(r.getStatus()).totalPrice(r.getTotalPrice()).createdAt(r.getCreatedAt())
