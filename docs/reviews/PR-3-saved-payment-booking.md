@@ -12,6 +12,6 @@ CRUD de métodos de pago guardados (`/api/payment-methods`), reserva en un clic 
 - 🟡 (revisión automática) Open redirect en `Login?next=` → corregido con `safeNext` + tests.
 
 ## QA (B)
-Backend 7 pruebas nuevas (Luhn, vencida, única predeterminada, IDOR, pago PAID, sin pago si hay conflicto, promover predeterminada al borrar). Frontend 5 nuevas. Total: 20 backend-front verdes (27 backend… ver CI local).
+Backend 7 pruebas nuevas (Luhn, vencida, única predeterminada, IDOR, pago PAID, sin pago si hay conflicto, promover predeterminada al borrar). Frontend 5 nuevas. Totales tras este PR: backend 20, frontend 20, todos verdes.
 
 ## Veredicto: aprobado.
