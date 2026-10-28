@@ -12,3 +12,5 @@ Herramienta A = Claude Code (Sonnet 5.5, sesión principal). Solo se registran i
 | Seguridad | Revisión automática (security-guidance) | Revisar commit de auth | Señaló password/token en `toString` con logs DEBUG y enumeración de usuarios por tiempo | **Aceptado**: `@ToString.Exclude`, logs a INFO, bcrypt con hash ficticio. Rate-limiting **diferido** (fuera de alcance) |
 | Frontend | A | Calendario dinámico (React) | Lógica de selección separada en `utils/calendar.ts` + componente | Aceptada; 15 tests; se verificó a mano que el rango nunca cruza días ocupados |
 | Build | A | `npm run build` | Falla por errores TS **preexistentes** del repo (no por nuestros cambios) | Decisión humana: no arreglar 20+ archivos ajenos; solo tipar bien lo nuevo |
+| Pagos | A | Reserva con datos de pago guardados | Primer diseño pedía número completo de tarjeta en cada reserva y lo reenviaba | **Rechazado**: rediseñado a token + últimos 4; PAN solo para tokenizar, nunca persistido ni devuelto |
+| Seguridad | Revisión automática | Revisar `Login.tsx` | Open redirect vía `?next=` | **Aceptado**: `safeNext()` con regex + tests |

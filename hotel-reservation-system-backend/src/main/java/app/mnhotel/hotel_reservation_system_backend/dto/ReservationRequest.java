@@ -19,4 +19,6 @@ public class ReservationRequest {
 	/** Dia de salida (exclusivo: la noche de este dia queda libre). */
 	@NotNull
 	private LocalDate checkOut;
+	/** Opcional: si se envia, se cobra con el metodo guardado (reserva en un clic). */
+	private Long savedPaymentMethodId;
 }

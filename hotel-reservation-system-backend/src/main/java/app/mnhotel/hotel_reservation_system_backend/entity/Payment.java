@@ -35,6 +35,9 @@ public class Payment {
 	@Column(name="payment_date")
 	private LocalDateTime paymentDate;
 	
+	@Column(name="method_label")
+	private String methodLabel; // p. ej. "VISA •••• 4242"
+
 	@Column(name="status")
 	private String status;
 
