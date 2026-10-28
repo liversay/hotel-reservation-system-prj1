@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @Builder
@@ -27,6 +28,7 @@ public class User {
     
     @Column(name="password")
     @JsonIgnore
+    @ToString.Exclude
     private String password;
     
     @Column(name="email", unique = true, nullable = false)

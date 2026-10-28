@@ -17,6 +17,7 @@ public class ReservationDTO {
 	 private LocalDateTime startDate;
 	 private LocalDateTime endDate;
 	 private String status;
+	 private Integer totalPrice;
 	 private LocalDateTime createdAt;
 
 	 // Información del usuario que realizó la reserva
