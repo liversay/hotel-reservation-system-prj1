@@ -17,3 +17,4 @@ Herramienta A = Claude Code (Sonnet 5.5, sesión principal). Solo se registran i
 | Previsión | A | Algoritmo de previsión de demanda | Regresión lineal + promedio móvil; primera versión asignaba toda la reserva al mes de entrada | **Modificado**: prorrateo por noche entre meses; sin estacionalidad (decisión humana: aceptar simplicidad, documentada) |
 | Testing | A | Tests de previsión | Un test dependía de otro para crear el usuario admin (falló en una corrida) | **Corregido** y validado con `-Dsurefire.runOrder=reversealphabetical` |
 | Frontend | A | Mostrar último mes del histórico | Usó `Array.at()`, no soportado por el `lib` TS del proyecto | **Corregido** tras `tsc` |
+| Cancelación | A | Cancelar reserva liberando fechas y reembolsando | Implementación correcta; test inicial de "reserva iniciada" llamaba al registro dos veces (redundante) | Aceptada; limpieza menor del test pendiente (no afecta resultado) |
