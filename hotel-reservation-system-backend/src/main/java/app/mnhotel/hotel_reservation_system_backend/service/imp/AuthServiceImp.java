@@ -21,11 +21,13 @@ public class AuthServiceImp implements AuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtService jwtService;
+	private final String dummyHash;
 
 	public AuthServiceImp(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtService = jwtService;
+		this.dummyHash = passwordEncoder.encode("dummy-password-for-timing");
 	}
 
 	@Override
@@ -49,9 +51,11 @@ public class AuthServiceImp implements AuthService {
 
 	@Override
 	public AuthResponse login(AuthRequest request) {
-		User user = userRepository.findByUsername(request.getUsername())
-				.orElseThrow(() -> new BadCredentialsException("Credenciales invalidas"));
-		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+		User user = userRepository.findByUsername(request.getUsername()).orElse(null);
+		// Siempre se ejecuta bcrypt (hash ficticio si el usuario no existe) para no revelar por tiempo si el usuario existe.
+		String hash = user != null ? user.getPassword() : dummyHash;
+		boolean ok = passwordEncoder.matches(request.getPassword(), hash);
+		if (user == null || !ok) {
 			throw new BadCredentialsException("Credenciales invalidas");
 		}
 		return toResponse(user);

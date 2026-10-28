@@ -41,6 +41,9 @@ public class Reservation {
 	@Column(name="status")
 	private String status;
 	
+	@Column(name="total_price")
+	private Integer totalPrice;
+	
 	@Column(name="created_at")
 	private LocalDateTime createdAt;
 	
