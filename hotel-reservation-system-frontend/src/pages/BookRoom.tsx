@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiError, tokenStore } from '../api/client'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
+import SavedCards, { type PaymentMethod } from '../components/SavedCards'
 import { nightsBetween, type Range } from '../utils/calendar'
 
 interface Room {
@@ -19,10 +20,22 @@ export default function BookRoom() {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const loggedIn = !!tokenStore.get()
+  const [methods, setMethods] = useState<PaymentMethod[] | null>(null)
+  const [methodId, setMethodId] = useState<number | null>(null)
 
   useEffect(() => {
     api<Room>(`/api/rooms/${roomId}`).then(setRoom).catch((e: Error) => setError(e.message))
   }, [roomId])
+
+  useEffect(() => {
+    if (!loggedIn) return
+    api<PaymentMethod[]>('/api/payment-methods')
+      .then((list) => {
+        setMethods(list)
+        setMethodId((list.find((m) => m.defaultMethod) ?? list[0])?.id ?? null) // predeterminada preseleccionada
+      })
+      .catch((e: Error) => setError(e.message))
+  }, [loggedIn])
 
   const nights = range.checkIn && range.checkOut ? nightsBetween(range.checkIn, range.checkOut) : 0
 
@@ -32,7 +45,7 @@ export default function BookRoom() {
     try {
       await api('/api/reservations', {
         method: 'POST',
-        body: JSON.stringify({ roomId: Number(roomId), checkIn: range.checkIn, checkOut: range.checkOut }),
+        body: JSON.stringify({ roomId: Number(roomId), checkIn: range.checkIn, checkOut: range.checkOut, savedPaymentMethodId: methodId }),
       })
       setDone('¡Reserva confirmada!')
     } catch (e) {
@@ -49,10 +62,14 @@ export default function BookRoom() {
       {nights > 0 && room && (
         <p>{range.checkIn} → {range.checkOut} · {nights} noche(s) · <strong>${nights * room.pricePerNight}</strong></p>
       )}
+      {loggedIn && methods && (
+        <SavedCards methods={methods} selectedId={methodId} onSelect={setMethodId}
+          onAdded={(m) => { setMethods([...methods, m]); setMethodId(m.id) }} />
+      )}
       {error && <p role="alert" className="text-red-600">{error}</p>}
       {done ? <p role="status" className="font-semibold text-green-700">{done}</p> : (
         <button disabled={nights === 0} onClick={reserve} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-40">
-          {loggedIn ? 'Reservar' : 'Inicia sesión para reservar'}
+          {!loggedIn ? 'Inicia sesión para reservar' : methodId ? 'Reservar y pagar con tarjeta guardada' : 'Reservar (pago en el hotel)'}
         </button>
       )}
     </main>

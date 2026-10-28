@@ -8,6 +8,11 @@ interface AuthResponse {
   role: string
 }
 
+/** Solo rutas internas: empieza con una sola '/' (rechaza '//host', '/\\host' y esquemas). */
+export function safeNext(next: string | null): string | null {
+  return next && /^\/(?![/\\])/.test(next) ? next : null
+}
+
 export default function Login() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [form, setForm] = useState({ username: '', email: '', password: '' })
@@ -21,7 +26,7 @@ export default function Login() {
     try {
       const res = await api<AuthResponse>(`/api/auth/${mode}`, { method: 'POST', body: JSON.stringify(form) })
       tokenStore.set(res.token)
-      navigate(params.get('next') ?? (res.role === 'ADMIN' ? '/admin' : '/'))
+      navigate(safeNext(params.get('next')) ?? (res.role === 'ADMIN' ? '/admin' : '/'))
     } catch (err) {
       setError((err as Error).message)
     }
