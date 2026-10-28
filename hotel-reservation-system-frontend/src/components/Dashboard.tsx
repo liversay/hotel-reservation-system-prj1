@@ -1,42 +1,47 @@
-import React from 'react'
+import { useEffect, useState } from 'react'
+import { api, ApiError } from '../api/client'
+import ForecastChart, { type ForecastData } from './ForecastChart'
 
 export default function Dashboard() {
+  const [data, setData] = useState<ForecastData | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    api<ForecastData>('/api/admin/forecast?historyMonths=12&horizonMonths=3')
+      .then(setData)
+      .catch((e: Error) =>
+        setError(e instanceof ApiError && (e.status === 401 || e.status === 403)
+          ? 'Necesitas iniciar sesión como administrador para ver la previsión.'
+          : e.message))
+  }, [])
+
+  const last = data?.history[data.history.length - 1]
+  const totalRevenue = data?.history.reduce((s, p) => s + p.revenue, 0) ?? 0
+
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-  <div className="mx-auto max-w-3xl text-center">
-    <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Trusted by eCommerce Businesses</h2>
-
-    <p className="mt-4 text-gray-500 sm:text-xl">
-      Lorem ipsum dolor sit amet consectetur adipisicing elit. Ratione dolores laborum labore
-      provident impedit esse recusandae facere libero harum sequi.
-    </p>
-  </div>
-
-  <dl className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:grid-cols-2 lg:grid-cols-4">
-    <div className="flex flex-col rounded-lg bg-gray-50 px-4 py-8 text-center">
-      <dt className="order-last text-lg font-medium text-gray-500">Total Sales</dt>
-
-      <dd className="text-4xl font-extrabold text-gray-600 md:text-5xl">$4.8m</dd>
+    <div className="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">
+      <h2 className="mb-4 text-2xl font-bold text-gray-900">Previsión de demanda</h2>
+      {error && <p role="alert" className="text-red-600">{error}</p>}
+      {!data && !error && <p>Cargando…</p>}
+      {data && (
+        <>
+          <dl className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-lg bg-gray-50 p-4 text-center">
+              <dd className="text-3xl font-extrabold text-gray-700">${Math.round(totalRevenue).toLocaleString()}</dd>
+              <dt className="text-gray-500">Ingresos (12 meses)</dt>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4 text-center">
+              <dd className="text-3xl font-extrabold text-gray-700">{last ? Math.round(last.occupancy * 100) : 0}%</dd>
+              <dt className="text-gray-500">Ocupación mes actual</dt>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4 text-center">
+              <dd className="text-3xl font-extrabold text-gray-700">{data.totalRooms}</dd>
+              <dt className="text-gray-500">Habitaciones</dt>
+            </div>
+          </dl>
+          <ForecastChart data={data} />
+        </>
+      )}
     </div>
-
-    <div className="flex flex-col rounded-lg bg-gray-50 px-4 py-8 text-center">
-      <dt className="order-last text-lg font-medium text-gray-500">Official Addons</dt>
-
-      <dd className="text-4xl font-extrabold text-gray-600 md:text-5xl">24</dd>
-    </div>
-
-    <div className="flex flex-col rounded-lg bg-gray-50 px-4 py-8 text-center">
-      <dt className="order-last text-lg font-medium text-gray-500">Total Addons</dt>
-
-      <dd className="text-4xl font-extrabold text-gray-600 md:text-5xl">86</dd>
-    </div>
-
-    <div className="flex flex-col rounded-lg bg-gray-50 px-4 py-8 text-center">
-      <dt className="order-last text-lg font-medium text-gray-500">Downloads</dt>
-
-      <dd className="text-4xl font-extrabold text-gray-600 md:text-5xl">86k</dd>
-    </div>
-  </dl>
-</div>
   )
 }

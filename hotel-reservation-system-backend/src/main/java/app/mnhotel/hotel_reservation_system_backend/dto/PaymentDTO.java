@@ -16,5 +16,6 @@ public class PaymentDTO {
 	private Integer amount;
 	private LocalDateTime paymentDate;
 	private String status;
- 	private ReservationDTO reservation;
+	private String methodLabel;
+
 }

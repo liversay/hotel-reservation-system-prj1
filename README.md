@@ -88,3 +88,21 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE)
 
 - [Natanael Lima](https://github.com/natanael-lima)
 - [Maximiliano Gaitan](https://github.com/maxi1103)
+
+
+## Ejecución rápida (sin PostgreSQL) y pruebas
+
+```bash
+# Backend (JDK 17+; compila también en JDK 26). Perfil dev = H2 en memoria + datos de demo
+cd hotel-reservation-system-backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev     # http://localhost:3000
+./mvnw test                                               # 39 pruebas
+
+# Frontend
+cd hotel-reservation-system-frontend
+npm install && npm run dev                                # http://localhost:5173
+npm test                                                  # 29 pruebas (vitest)
+```
+Usuarios de demo (solo perfil dev): `admin / admin12345` (ADMIN), `demo / demo12345` (USER). Producción: definir `JWT_SECRET` (>= 32 caracteres) y PostgreSQL.
+
+Documentación del proyecto de curso: `docs/issues/README.md` (historias), `docs/reviews/` (PRs), `docs/AI_DEVELOPMENT_LOG.md`.

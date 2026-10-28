@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @Builder
@@ -26,10 +27,16 @@ public class User {
     private String username;
     
     @Column(name="password")
+    @JsonIgnore
+    @ToString.Exclude
     private String password;
     
     @Column(name="email", unique = true, nullable = false)
     private String email;
+    
+    @Column(name="role", nullable = false)
+    @Builder.Default
+    private String role = "USER";
     
     @Column(name="created_at")
     private LocalDateTime createdAt;
