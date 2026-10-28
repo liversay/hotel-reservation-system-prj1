@@ -15,7 +15,7 @@ export default function Dashboard() {
           : e.message))
   }, [])
 
-  const last = data?.history.at(-1)
+  const last = data?.history[data.history.length - 1]
   const totalRevenue = data?.history.reduce((s, p) => s + p.revenue, 0) ?? 0
 
   return (
