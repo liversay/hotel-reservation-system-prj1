@@ -26,10 +26,15 @@ public class User {
     private String username;
     
     @Column(name="password")
+    @JsonIgnore
     private String password;
     
     @Column(name="email", unique = true, nullable = false)
     private String email;
+    
+    @Column(name="role", nullable = false)
+    @Builder.Default
+    private String role = "USER";
     
     @Column(name="created_at")
     private LocalDateTime createdAt;
