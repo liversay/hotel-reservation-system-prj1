@@ -38,13 +38,15 @@ public class ForecastServiceImp implements ForecastService {
 		}
 		int rooms = (int) roomRepository.count();
 		YearMonth current = YearMonth.now();
-		YearMonth first = current.minusMonths(historyMonths - 1L);
+		// Historico = ultimos N meses COMPLETOS (el mes en curso esta incompleto y sesgaria la serie a la baja).
+		YearMonth first = current.minusMonths(historyMonths);
+		YearMonth lastForecast = current.plusMonths(horizonMonths - 1L);
 
 		Map<YearMonth, double[]> acc = new TreeMap<>(); // [noches, ingresos]
-		for (int i = 0; i < historyMonths; i++) acc.put(first.plusMonths(i), new double[2]);
+		for (YearMonth m = first; !m.isAfter(lastForecast); m = m.plusMonths(1)) acc.put(m, new double[2]);
 
 		List<Reservation> all = reservationRepository.findActiveBetween(first.atDay(1).atStartOfDay(),
-				current.plusMonths(1).atDay(1).atStartOfDay());
+				lastForecast.plusMonths(1).atDay(1).atStartOfDay());
 		for (Reservation r : all) {
 			// Prorrateo por noche: una reserva que cruza de mes reparte noches e ingresos entre ambos meses.
 			int nights = (int) java.time.temporal.ChronoUnit.DAYS.between(r.getStartDate().toLocalDate(), r.getEndDate().toLocalDate());
@@ -58,17 +60,20 @@ public class ForecastServiceImp implements ForecastService {
 
 		List<Point> history = new ArrayList<>();
 		List<Double> series = new ArrayList<>();
-		acc.forEach((m, a) -> {
+		for (YearMonth m = first; m.isBefore(current); m = m.plusMonths(1)) {
+			double[] a = acc.get(m);
 			history.add(new Point(m.toString(), a[0], Math.round(a[1] * 100) / 100.0, occupancy(a[0], m, rooms), 0));
 			series.add(a[0]);
-		});
+		}
 
+		// Prevision desde el mes en curso. Lo ya reservado es un piso: no se preve menos de lo confirmado.
 		List<Double> predicted = DemandForecaster.forecast(series, horizonMonths);
 		List<Point> forecast = new ArrayList<>();
 		for (int k = 0; k < horizonMonths; k++) {
-			YearMonth m = current.plusMonths(k + 1L);
-			double occ = occupancy(predicted.get(k), m, rooms);
-			forecast.add(new Point(m.toString(), predicted.get(k), 0, occ, DemandForecaster.suggestedPriceChangePct(occ)));
+			YearMonth m = current.plusMonths(k);
+			double nights = Math.max(predicted.get(k), acc.get(m)[0]);
+			double occ = occupancy(nights, m, rooms);
+			forecast.add(new Point(m.toString(), nights, 0, occ, DemandForecaster.suggestedPriceChangePct(occ)));
 		}
 		return new ForecastDTO(rooms, history, forecast);
 	}

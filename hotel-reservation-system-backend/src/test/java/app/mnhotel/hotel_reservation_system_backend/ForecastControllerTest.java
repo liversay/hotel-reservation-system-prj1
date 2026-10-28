@@ -49,7 +49,7 @@ class ForecastControllerTest extends TestSupport {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.history.length()").value(6))
 			.andExpect(jsonPath("$.forecast.length()").value(3))
-			.andExpect(jsonPath("$.forecast[0].month").value(YearMonth.now().plusMonths(1).toString()));
+			.andExpect(jsonPath("$.forecast[0].month").value(YearMonth.now().toString()));
 	}
 
 	@Test
@@ -81,6 +81,32 @@ class ForecastControllerTest extends TestSupport {
 		String body = mvc.perform(get("/api/admin/forecast").param("historyMonths", "6")
 				.header("Authorization", "Bearer " + token)).andReturn().getResponse().getContentAsString();
 		org.junit.jupiter.api.Assertions.assertTrue(body.contains("\"month\":\"" + m + "\",\"roomNights\":0.0"), body);
+	}
+
+	@Test
+	void currentIncompleteMonthIsNotPartOfHistory() throws Exception {
+		mvc.perform(get("/api/admin/forecast").param("historyMonths", "3")
+				.header("Authorization", "Bearer " + adminToken()))
+			.andExpect(jsonPath("$.history[2].month").value(YearMonth.now().minusMonths(1).toString()));
+	}
+
+	@Test
+	void forecastNeverBelowAlreadyBookedNights() throws Exception {
+		Room room = newRoom(100);
+		String t = adminToken();
+		YearMonth m = YearMonth.now().plusMonths(2);
+		var start = m.atDay(1).atStartOfDay();
+		var u = users.findByUsername("boss").orElseThrow();
+		for (int i = 0; i < 5; i++) { // 5 habitaciones distintas x 20 noches = 100 noches confirmadas
+			Room r = newRoom(100);
+			reservations.save(Reservation.builder().user(u).room(r).startDate(start).endDate(start.plusDays(20))
+					.status("CONFIRMED").totalPrice(2000).createdAt(start.minusDays(30)).build());
+		}
+		String body = mvc.perform(get("/api/admin/forecast").param("horizonMonths", "3")
+				.header("Authorization", "Bearer " + t)).andReturn().getResponse().getContentAsString();
+		var node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(body).get("forecast").get(2);
+		org.junit.jupiter.api.Assertions.assertEquals(m.toString(), node.get("month").asText());
+		org.junit.jupiter.api.Assertions.assertTrue(node.get("roomNights").asDouble() >= 100.0, body);
 	}
 
 	@Test
