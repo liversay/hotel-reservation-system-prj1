@@ -14,3 +14,6 @@ Herramienta A = Claude Code (Sonnet 5.5, sesión principal). Solo se registran i
 | Build | A | `npm run build` | Falla por errores TS **preexistentes** del repo (no por nuestros cambios) | Decisión humana: no arreglar 20+ archivos ajenos; solo tipar bien lo nuevo |
 | Pagos | A | Reserva con datos de pago guardados | Diseño con token + últimos 4 desde el inicio; el PAN solo se usa para tokenizar | Aceptada con decisión humana de diseño: CVV nunca se acepta ni guarda; limitación (PAN pasa por backend) documentada |
 | Seguridad | Revisión automática | Revisar `Login.tsx` | Open redirect vía `?next=` | **Aceptado**: `safeNext()` con regex + tests |
+| Previsión | A | Algoritmo de previsión de demanda | Regresión lineal + promedio móvil; primera versión asignaba toda la reserva al mes de entrada | **Modificado**: prorrateo por noche entre meses; sin estacionalidad (decisión humana: aceptar simplicidad, documentada) |
+| Testing | A | Tests de previsión | Un test dependía de otro para crear el usuario admin (falló en una corrida) | **Corregido** y validado con `-Dsurefire.runOrder=reversealphabetical` |
+| Frontend | A | Mostrar último mes del histórico | Usó `Array.at()`, no soportado por el `lib` TS del proyecto | **Corregido** tras `tsc` |

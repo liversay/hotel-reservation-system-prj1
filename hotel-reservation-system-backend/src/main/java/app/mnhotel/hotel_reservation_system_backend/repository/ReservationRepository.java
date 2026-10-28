@@ -19,5 +19,9 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long>{
 	List<Reservation> findActiveOverlapping(@Param("roomId") Long roomId,
 			@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+	/** Reservas activas que tocan el intervalo [from, to). */
+	@Query("select r from Reservation r where r.status <> 'CANCELLED' and r.startDate < :to and r.endDate > :from")
+	List<Reservation> findActiveBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
 	List<Reservation> findByUserUsernameOrderByStartDateDesc(String username);
 }
