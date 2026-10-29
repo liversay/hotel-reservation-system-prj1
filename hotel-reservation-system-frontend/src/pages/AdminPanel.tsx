@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { tokenStore } from '../api/client';
 import HotelSection from '../components/HotelSection';
 import RoomSection from '../components/RoomSection';
 import UserSection from '../components/UserSection';
@@ -14,6 +16,14 @@ export default function AdminPanel() {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  if (!tokenStore.get()) {
+    return (
+      <p className="p-6">
+        Necesitas iniciar sesión como administrador. <Link to="/login?next=/admin" className="text-blue-700 underline">Iniciar sesión</Link>
+      </p>
+    )
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

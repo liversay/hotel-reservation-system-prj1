@@ -15,6 +15,10 @@ import app.mnhotel.hotel_reservation_system_backend.service.HotelService;
 public class HotelServiceImp implements HotelService{
 	@Autowired
 	private HotelRepository hotelRepository;
+	@Autowired
+	private app.mnhotel.hotel_reservation_system_backend.repository.RoomRepository roomRepository;
+	@Autowired
+	private app.mnhotel.hotel_reservation_system_backend.repository.ReservationRepository reservationRepository;
 	
 	// Convertir de entidad a DTO
     private HotelDTO convertEntityToDTO(Hotel hotel) {
@@ -57,10 +61,13 @@ public class HotelServiceImp implements HotelService{
 	@Override
 	public void createHotel(HotelDTO hotelRequest) throws Exception {
 		// TODO Auto-generated method stub
+		if (hotelRequest.getName() == null || hotelRequest.getName().isBlank()) {
+			throw new app.mnhotel.hotel_reservation_system_backend.exception.BadRequestException("El nombre del hotel es obligatorio");
+		}
 		try {	
 
 		 		Hotel hotel = new Hotel();
-		 		hotel.setId(hotelRequest.getId());
+		 		
 		 		hotel.setName(hotelRequest.getName());
 		 		hotel.setLocation(hotelRequest.getLocation());
 		 		hotel.setDescription(hotelRequest.getDescription());
@@ -97,16 +104,18 @@ public class HotelServiceImp implements HotelService{
 	@Override
 	public void deleteHotel(Long id) throws Exception {
 		// TODO Auto-generated method stub
-	     Hotel hotel = hotelRepository.findById(id)
-			            .orElseThrow(() -> new Exception("Hotel no encontrado"));
-				
-	     hotelRepository.deleteById(id);	
+	     hotelRepository.findById(id)
+			            .orElseThrow(() -> new app.mnhotel.hotel_reservation_system_backend.exception.ResourceNotFoundException("Hotel no encontrado"));
+	     if (roomRepository.findByHotelId(id).stream().anyMatch(r -> reservationRepository.existsByRoomId(r.getId()))) {
+	    	 throw new app.mnhotel.hotel_reservation_system_backend.exception.ConflictException("No se puede eliminar: el hotel tiene habitaciones con reservas");
+	     }
+	     hotelRepository.deleteById(id);
 	}
 	@Override
 	public ApiResponse updateHotelData(HotelDTO hotelRequest) throws Exception {
 		// TODO Auto-generated method stub
 		Hotel hotel = hotelRepository.findById(hotelRequest.getId())
-	            .orElseThrow(() -> new Exception("Hotel no encontrado"));
+	            .orElseThrow(() -> new app.mnhotel.hotel_reservation_system_backend.exception.ResourceNotFoundException("Hotel no encontrado"));
 		 
 	    // Actualización de campos del producto
 		hotel.setName(hotelRequest.getName());
