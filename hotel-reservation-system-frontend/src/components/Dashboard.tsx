@@ -32,7 +32,7 @@ export default function Dashboard() {
             </div>
             <div className="rounded-lg bg-gray-50 p-4 text-center">
               <dd className="text-3xl font-extrabold text-gray-700">{last ? Math.round(last.occupancy * 100) : 0}%</dd>
-              <dt className="text-gray-500">Ocupación mes actual</dt>
+              <dt className="text-gray-500">Ocupación último mes</dt>
             </div>
             <div className="rounded-lg bg-gray-50 p-4 text-center">
               <dd className="text-3xl font-extrabold text-gray-700">{data.totalRooms}</dd>
