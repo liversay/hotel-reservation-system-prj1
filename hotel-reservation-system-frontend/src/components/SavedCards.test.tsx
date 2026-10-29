@@ -30,13 +30,13 @@ describe('SavedCards', () => {
   })
 
   it('muestra el error del backend (tarjeta invalida)', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400, statusText: 'Bad', json: async () => ({ message: 'Numero de tarjeta invalido' }) }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400, statusText: 'Bad', json: async () => ({ message: 'Número de tarjeta inválido' }) }))
     render(<SavedCards methods={[]} selectedId={null} onSelect={() => {}} onAdded={() => {}} />)
     await userEvent.type(screen.getByLabelText('Número de tarjeta'), '1111')
     await userEvent.type(screen.getByLabelText('Titular'), 'Ana')
     await userEvent.type(screen.getByLabelText('Mes'), '12')
     await userEvent.type(screen.getByLabelText('Año'), '2031')
     await userEvent.click(screen.getByText('Guardar tarjeta'))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Numero de tarjeta invalido')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Número de tarjeta inválido')
   })
 })

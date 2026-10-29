@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { tokenStore } from '../api/client'
+import { fakeJwt } from '../auth/testToken'
 import BookRoom from './BookRoom'
 
 const ok = (body: unknown, status = 200) => ({ ok: true, status, json: async () => body })
@@ -37,7 +38,8 @@ function setup(reserve: () => unknown) {
   return fetchMock
 }
 
-beforeEach(() => tokenStore.set('t'))
+// exp lejano: el reloj falso del test fija la fecha en 2030
+beforeEach(() => tokenStore.set(fakeJwt({ sub: 'u', role: 'CUSTOMER', exp: 4_000_000_000 })))
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); localStorage.clear() })
 
 describe('BookRoom', () => {
@@ -61,5 +63,15 @@ describe('BookRoom', () => {
     await user.click(screen.getByLabelText('2030-05-03 disponible'))
     await user.click(screen.getByRole('button', { name: /Reservar/ }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor. Inténtalo de nuevo.')
+  })
+
+  it('con token vencido no pide métodos de pago y ofrece iniciar sesión', async () => {
+    tokenStore.set(fakeJwt({ sub: 'u', role: 'CUSTOMER', exp: 1 }))
+    const fetchMock = setup(() => 'ok')
+    const user = userEvent.setup({ advanceTimers: () => {} })
+    await user.click(await screen.findByLabelText('2030-05-01 disponible'))
+    await user.click(screen.getByLabelText('2030-05-03 disponible'))
+    expect(screen.getByRole('button', { name: 'Inicia sesión para reservar' })).toBeInTheDocument()
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/api/payment-methods'))).toBe(false)
   })
 })

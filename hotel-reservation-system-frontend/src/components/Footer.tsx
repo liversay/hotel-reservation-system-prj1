@@ -11,7 +11,7 @@ export default function Footer() {
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="inline-block rounded-full bg-orange-600 p-2 text-white shadow transition hover:bg-orange-700 sm:p-3 lg:p-4"
             >
-              <span className="sr-only">Back to top</span>
+              <span className="sr-only">Volver arriba</span>
 
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -47,21 +47,21 @@ export default function Footer() {
               className="mt-12 flex flex-wrap justify-center gap-6 md:gap-8 lg:mt-0 lg:justify-end lg:gap-12"
             >
               <li>
-                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/"> Home </Link>
+                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/"> Inicio </Link>
               </li>
 
               <li>
-                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/products"> Rooms </Link>
+                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/products"> Habitaciones </Link>
               </li>
 
               <li>
-                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/about"> About Us </Link>
+                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/about"> Nosotros </Link>
               </li>
             </ul>
           </div>
 
           <p className="mt-12 text-center text-sm text-gray-500 lg:text-right">
-            Copyright &copy; 2024. All rights reserved.
+            Copyright &copy; 2024. Todos los derechos reservados.
           </p>
         </div>
       </footer>

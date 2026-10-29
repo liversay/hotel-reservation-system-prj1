@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { api, ApiError, tokenStore } from '../api/client'
+import { api, ApiError } from '../api/client'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import SavedCards, { type PaymentMethod } from '../components/SavedCards'
+import { isAuthenticated } from '../auth/session'
 import { friendlyError } from '../utils/errors'
 import { nightsBetween, type Range } from '../utils/calendar'
 
@@ -21,7 +22,7 @@ export default function BookRoom() {
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [done, setDone] = useState<string | null>(null)
-  const loggedIn = !!tokenStore.get()
+  const loggedIn = isAuthenticated()
   const [methods, setMethods] = useState<PaymentMethod[] | null>(null)
   const [methodId, setMethodId] = useState<number | null>(null)
 
