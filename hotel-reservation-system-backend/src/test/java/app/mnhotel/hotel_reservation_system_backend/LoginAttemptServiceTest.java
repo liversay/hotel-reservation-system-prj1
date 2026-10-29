@@ -47,19 +47,46 @@ class LoginAttemptServiceTest {
 		assertTrue(svc.tryAttempt("ana", "2.2.2.2"));
 	}
 
+	/** El login distingue mayusculas (findByUsername exacto), asi que "Admin" y "admin" son cuentas distintas. */
 	@Test
-	void usernameIsCaseInsensitiveTrimmedAndTruncated() {
+	void usernameIsCaseSensitiveTrimmedAndTruncated() {
 		LoginAttemptService svc = new LoginAttemptService(new MutableClock());
-		assertTrue(svc.tryAttempt("Admin", "1.1.1.1"));
-		assertTrue(svc.tryAttempt(" admin ", "1.1.1.1"));
-		assertTrue(svc.tryAttempt("ADMIN", "1.1.1.1"));
-		assertTrue(svc.tryAttempt("admin", "1.1.1.1"));
-		assertTrue(svc.tryAttempt("aDmIn", "1.1.1.1"));
+		for (int i = 0; i < 5; i++) assertTrue(svc.tryAttempt(i % 2 == 0 ? "admin" : " admin ", "1.1.1.1"));
 		assertFalse(svc.tryAttempt("admin", "1.1.1.1"));
+		assertTrue(svc.tryAttempt("Admin", "1.1.1.1"));
 		String longA = "a".repeat(100) + "X";
 		String longB = "a".repeat(100) + "Y";
 		for (int i = 0; i < 5; i++) assertTrue(svc.tryAttempt(longA, "3.3.3.3"));
 		assertFalse(svc.tryAttempt(longB, "3.3.3.3"));
+	}
+
+	@Test
+	void successOfOneIdentityDoesNotResetAnotherCaseVariant() {
+		LoginAttemptService svc = new LoginAttemptService(new MutableClock());
+		for (int i = 0; i < 19; i++) svc.tryAttempt("Admin", "10.0.0." + (i / 4));
+		svc.tryAttempt("admin", "9.9.9.9");
+		svc.recordSuccess("admin", "9.9.9.9");
+		assertTrue(svc.tryAttempt("Admin", "10.9.9.9")); // 20.o intento: la cuenta "Admin" conserva su cuenta
+		assertFalse(svc.tryAttempt("Admin", "10.9.9.8"));
+	}
+
+	@Test
+	void ipv6AddressesInSame64ShareCounter() {
+		LoginAttemptService svc = new LoginAttemptService(new MutableClock());
+		for (int i = 0; i < 30; i++) assertTrue(svc.tryAttempt("v" + i, "2001:db8:1:2:0:0:0:" + Integer.toHexString(i + 1)));
+		assertFalse(svc.tryAttempt("otro", "2001:db8:1:2:aaaa:bbbb:cccc:dddd"));
+		assertTrue(svc.tryAttempt("otro", "2001:db8:1:3::1")); // otro /64
+		// IPv4 no se agrupa
+		assertTrue(svc.tryAttempt("otro", "192.168.0.1"));
+	}
+
+	@Test
+	void successfulLoginsDoNotConsumeIpQuota() {
+		LoginAttemptService svc = new LoginAttemptService(new MutableClock());
+		for (int i = 0; i < 100; i++) {
+			assertTrue(svc.tryAttempt("ok" + (i % 3), "7.7.7.7"));
+			svc.recordSuccess("ok" + (i % 3), "7.7.7.7");
+		}
 	}
 
 	@Test
@@ -78,19 +105,20 @@ class LoginAttemptServiceTest {
 	}
 
 	@Test
-	void successResetsUserAndAccountCountersButNotIpCounter() {
+	void successResetsUserAndAccountCountersAndRefundsOnlyOneIpAttempt() {
 		LoginAttemptService svc = new LoginAttemptService(new MutableClock());
 		for (int i = 0; i < 4; i++) svc.tryAttempt("bob", "7.7.7.7");
-		svc.recordSuccess("Bob", "7.7.7.7");
+		svc.recordSuccess("bob", "7.7.7.7");
 		// usuario+IP reiniciado: otros 5 intentos permitidos (el 5to ya no cabria sin reinicio)
 		for (int i = 0; i < 5; i++) assertTrue(svc.tryAttempt("bob", "7.7.7.7"));
 		assertFalse(svc.tryAttempt("bob", "7.7.7.7"));
-		// el contador de IP NO se reinicio: 9 intentos acumulados + 21 mas = 30
+		// IP: solo se devuelve el intento del propio login exitoso (no es un reinicio)
 		LoginAttemptService s2 = new LoginAttemptService(new MutableClock());
 		for (int i = 0; i < 29; i++) s2.tryAttempt("x" + i, "8.8.8.8");
-		s2.recordSuccess("x0", "8.8.8.8");
+		s2.recordSuccess("x0", "8.8.8.8"); // 29 -> 28
 		assertTrue(s2.tryAttempt("y", "8.8.8.8"));
-		assertFalse(s2.tryAttempt("z", "8.8.8.8"));
+		assertTrue(s2.tryAttempt("z", "8.8.8.8"));
+		assertFalse(s2.tryAttempt("w", "8.8.8.8"));
 		// el contador de cuenta se reinicio
 		LoginAttemptService s3 = new LoginAttemptService(new MutableClock());
 		for (int i = 0; i < 19; i++) s3.tryAttempt("cta", "9.9." + (i / 4) + ".1");
@@ -100,22 +128,32 @@ class LoginAttemptServiceTest {
 	}
 
 	@Test
+	void refundIsNoOpWhenIpEntryExpiredOrEvicted() {
+		MutableClock clock = new MutableClock();
+		LoginAttemptService svc = new LoginAttemptService(clock);
+		svc.tryAttempt("a", "5.5.5.5");
+		clock.now = clock.now.plus(Duration.ofMinutes(16));
+		svc.recordSuccess("a", "5.5.5.5");
+		for (int i = 0; i < 30; i++) assertTrue(svc.tryAttempt("n" + i, "5.5.5.5"));
+		assertFalse(svc.tryAttempt("n", "5.5.5.5"));
+	}
+
+	@Test
 	void mapIsBoundedAndExpires() {
 		MutableClock clock = new MutableClock();
 		LoginAttemptService svc = new LoginAttemptService(clock);
 		for (int i = 0; i < 10_050; i++) svc.tryAttempt("user" + i, "20." + (i / 25) + ".0.1");
-		assertTrue(svc.trackedEntries() > 9_000 && svc.trackedEntries() <= 10_000, "entradas: " + svc.trackedEntries());
+		assertEquals(10_000, svc.trackedEntries());
 		// al superar el tope se descarta la mas antigua: user0 vuelve a empezar de cero
 		LoginAttemptService small = new LoginAttemptService(clock);
 		for (int i = 0; i < 5; i++) assertTrue(small.tryAttempt("victima", "1.2.3.4"));
 		assertFalse(small.tryAttempt("victima", "1.2.3.4"));
 		for (int i = 0; i < 10_001; i++) small.tryAttempt("relleno" + i, "30." + (i / 25) + ".0.1");
 		assertTrue(small.tryAttempt("victima", "1.2.3.4"));
-		// expiracion por inactividad: con el mapa lleno, pasados 15 min las expiradas se purgan al insertar
-		// (el mapa de IP, ~400 entradas, no estaba lleno y no se purga; los de usuario+IP y cuenta quedan en 1)
+		// expiracion por inactividad: pasados 15 min, al insertar se purgan todas las expiradas de cada mapa
 		clock.now = clock.now.plus(Duration.ofMinutes(16));
 		svc.tryAttempt("nuevo", "99.99.99.99");
-		assertTrue(svc.trackedEntries() <= 500, "entradas tras expirar: " + svc.trackedEntries());
+		assertEquals(1, svc.trackedEntries(), "no deben quedar entradas expiradas");
 	}
 
 	@Test

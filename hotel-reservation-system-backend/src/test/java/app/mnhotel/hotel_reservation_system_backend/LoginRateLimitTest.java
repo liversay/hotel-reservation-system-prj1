@@ -78,18 +78,29 @@ class LoginRateLimitTest extends TestSupport {
 		login("rl_ipuser", "password1", "10.2.0.2", 200);
 	}
 
+	/** El login distingue mayusculas y el registro permite "rl_Dup" y "rl_dup" como cuentas distintas. */
 	@Test
-	void usernameCaseInsensitive() throws Exception {
-		registerAndGetToken("rl_case");
-		String[] variants = {"rl_case", "RL_CASE", "Rl_Case", "rl_CASE", "RL_case"};
-		for (String v : variants) {
-			login(v, "wrongpass1", "10.3.0.1", 401);
+	void caseVariantsAreSeparateAccountsAndSuccessDoesNotResetTheOther() throws Exception {
+		registerAndGetToken("rl_Dup");
+		registerAndGetToken("rl_dup");
+		for (int i = 0; i < 5; i++) {
+			login("rl_Dup", "wrongpass1", "10.3.0.1", 401);
 		}
-		login("rl_case", "password1", "10.3.0.1", 429);
+		login("rl_Dup", "password1", "10.3.0.1", 429);
+		login("rl_dup", "password1", "10.3.0.1", 200);
+		login("rl_Dup", "password1", "10.3.0.1", 429); // el exito de rl_dup no reinicio a rl_Dup
 	}
 
 	@Test
-	void successResetsPerUserCountersButNotIpCounter() throws Exception {
+	void successfulLoginsDoNotConsumeIpQuota() throws Exception {
+		registerAndGetToken("rl_many");
+		for (int i = 0; i < 40; i++) {
+			login("rl_many", "password1", "10.5.0.1", 200);
+		}
+	}
+
+	@Test
+	void successResetsPerUserCountersAndRefundsIpAttempt() throws Exception {
 		registerAndGetToken("rl_succ");
 		for (int i = 0; i < 4; i++) {
 			login("rl_succ", "wrongpass1", "10.4.0.1", 401);
@@ -100,11 +111,10 @@ class LoginRateLimitTest extends TestSupport {
 			login("rl_succ", "wrongpass1", "10.4.0.1", 401);
 		}
 		login("rl_succ", "password1", "10.4.0.1", 429);
-		// contador de IP: 4 + 1 + 5 = 10 intentos acumulados; 20 mas llegan a 30 y el siguiente se rechaza
-		for (int i = 0; i < 19; i++) {
+		// contador de IP solo de fallos: 4 + 5 = 9 (el exito se devolvio); 21 fallos mas llegan a 30 y el siguiente se rechaza
+		for (int i = 0; i < 21; i++) {
 			login("rl_other" + i, "wrongpass1", "10.4.0.1", 401);
 		}
-		login("rl_other_x", "wrongpass1", "10.4.0.1", 401);
 		login("rl_other_y", "wrongpass1", "10.4.0.1", 429);
 	}
 }

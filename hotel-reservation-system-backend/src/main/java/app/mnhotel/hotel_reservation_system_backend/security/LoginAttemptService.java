@@ -2,10 +2,11 @@ package app.mnhotel.hotel_reservation_system_backend.security;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -16,8 +17,10 @@ import org.springframework.stereotype.Service;
  * <ul>
  * <li>usuario+IP: {@value #MAX_PER_USER_IP} intentos;</li>
  * <li>cuenta (usuario, sin IP): {@value #MAX_PER_ACCOUNT} intentos;</li>
- * <li>IP (todos los usuarios): {@value #MAX_PER_IP} intentos.</li>
+ * <li>IP (todos los usuarios): {@value #MAX_PER_IP} fallos (IPv6 agrupada por /64).</li>
  * </ul>
+ * El nombre de usuario NO se pasa a minusculas: el login distingue mayusculas, "Admin" y "admin" son cuentas
+ * distintas y no deben compartir ni reiniciarse mutuamente los contadores.
  * El intento se reserva ({@link #tryAttempt}) antes de validar la contrasena: si algun contador ya esta en su
  * limite se rechaza sin incrementar nada. Un login correcto ({@link #recordSuccess}) borra los contadores
  * usuario+IP y cuenta, pero no el de IP. Cada mapa esta acotado a {@value #MAX_ENTRIES} entradas.
@@ -50,7 +53,8 @@ public class LoginAttemptService {
 	}
 
 	/** Reserva un intento de login; devuelve false (sin contarlo) si algun limite ya se alcanzo. */
-	public synchronized boolean tryAttempt(String username, String ip) {
+	public synchronized boolean tryAttempt(String username, String rawIp) {
+		String ip = normalizeIp(rawIp);
 		String account = normalize(username);
 		String userIp = account + "|" + ip;
 		Instant now = clock.instant();
@@ -66,10 +70,20 @@ public class LoginAttemptService {
 	}
 
 	/** Login correcto: reinicia usuario+IP y cuenta; el contador de IP se conserva. */
-	public synchronized void recordSuccess(String username, String ip) {
+	public synchronized void recordSuccess(String username, String rawIp) {
+		String ip = normalizeIp(rawIp);
 		String account = normalize(username);
 		byUserIp.remove(account + "|" + ip);
 		byAccount.remove(account);
+		// Devuelve el intento reservado en el contador de IP (solo cuentan los fallos).
+		Entry e = byIp.get(ip);
+		if (e != null && clock.instant().isBefore(e.lastAttempt().plus(WINDOW))) {
+			if (e.count() <= 1) {
+				byIp.remove(ip);
+			} else {
+				byIp.put(ip, new Entry(e.count() - 1, e.lastAttempt())); // misma posicion en el orden
+			}
+		}
 	}
 
 	/** Mayor numero de entradas en cualquiera de los mapas (para pruebas y diagnostico). */
@@ -78,8 +92,25 @@ public class LoginAttemptService {
 	}
 
 	private static String normalize(String username) {
-		String u = username == null ? "" : username.trim().toLowerCase(Locale.ROOT);
+		String u = username == null ? "" : username.trim();
 		return u.length() > MAX_USERNAME_LENGTH ? u.substring(0, MAX_USERNAME_LENGTH) : u;
+	}
+
+	/** IPv4 igual; IPv6 reducida a su prefijo /64 (un cliente controla todo su /64). Solo literales: sin DNS. */
+	private static String normalizeIp(String ip) {
+		if (ip == null || ip.indexOf(':') < 0 || !ip.matches("[0-9a-fA-F:.%]+")) {
+			return String.valueOf(ip);
+		}
+		try {
+			if (InetAddress.getByName(ip) instanceof Inet6Address v6) {
+				byte[] b = v6.getAddress();
+				return String.format("%02x%02x:%02x%02x:%02x%02x:%02x%02x::/64",
+						b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
+			}
+			return InetAddress.getByName(ip).getHostAddress(); // IPv4 mapeada a IPv6
+		} catch (java.net.UnknownHostException e) {
+			return ip;
+		}
 	}
 
 	private int countOf(Map<String, Entry> map, String key, Instant now) {
@@ -97,13 +128,11 @@ public class LoginAttemptService {
 	private void increment(Map<String, Entry> map, String key, Instant now) {
 		Entry old = map.remove(key); // remove + put => queda como el mas reciente
 		map.put(key, new Entry(old == null ? 1 : old.count() + 1, now));
+		purgeExpired(map, now); // el mas antiguo va primero: solo se recorren las expiradas
 		if (map.size() > MAX_ENTRIES) {
-			purgeExpired(map, now);
-			if (map.size() > MAX_ENTRIES) {
-				Iterator<String> oldest = map.keySet().iterator();
-				oldest.next();
-				oldest.remove();
-			}
+			Iterator<String> oldest = map.keySet().iterator();
+			oldest.next();
+			oldest.remove();
 		}
 	}
 
