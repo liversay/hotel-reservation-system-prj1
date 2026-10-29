@@ -19,6 +19,7 @@ import app.mnhotel.hotel_reservation_system_backend.dto.HotelDTO;
 import app.mnhotel.hotel_reservation_system_backend.entity.Hotel;
 import app.mnhotel.hotel_reservation_system_backend.response.ApiResponse;
 import app.mnhotel.hotel_reservation_system_backend.service.HotelService;
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -30,7 +31,7 @@ public class HotelController {
 	
 	// API para crear un hotel.
 	@PostMapping("/registration-hotel")
-	public ResponseEntity<ApiResponse> createHotel(@RequestBody HotelDTO hotelRequest) {
+	public ResponseEntity<ApiResponse> createHotel(@Valid @RequestBody HotelDTO hotelRequest) {
 		if (hotelRequest == null) {
 	    	 return ResponseEntity.badRequest().body(new ApiResponse("Error: la solicitud están vacíos"));
 	    } else {
@@ -56,7 +57,7 @@ public class HotelController {
 	
 	// API para editar un hotel by ID.
 	@PutMapping("/update-hotel/{id}")
-	public ResponseEntity<ApiResponse> updateHotel(@PathVariable Long id, @RequestBody HotelDTO hotelDTO) {
+	public ResponseEntity<ApiResponse> updateHotel(@PathVariable Long id, @Valid @RequestBody HotelDTO hotelDTO) {
 		    hotelDTO.setId(id);
 		    try {
 		        return ResponseEntity.ok(hotelService.updateHotelData(hotelDTO));

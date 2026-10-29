@@ -20,9 +20,6 @@ public class ReservationDTO {
 	 private Integer totalPrice;
 	 private LocalDateTime createdAt;
 
-	 // Información del usuario que realizó la reserva
-	 private UserDTO user;
-	    
 	 // Información de la habitación reservada
 	 private RoomDTO room;
 

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import app.mnhotel.hotel_reservation_system_backend.dto.DayAvailabilityDTO;
 import app.mnhotel.hotel_reservation_system_backend.dto.RoomDTO;
 import app.mnhotel.hotel_reservation_system_backend.service.RoomService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -40,7 +41,7 @@ public class RoomController {
 	}
 
 	@PostMapping
-	public ResponseEntity<RoomDTO> create(@RequestBody RoomDTO room) {
+	public ResponseEntity<RoomDTO> create(@Valid @RequestBody RoomDTO room) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(roomService.create(room));
 	}
 
@@ -51,7 +52,7 @@ public class RoomController {
 	}
 
 	@PutMapping("/{id}")
-	public RoomDTO update(@PathVariable Long id, @RequestBody RoomDTO room) {
+	public RoomDTO update(@PathVariable Long id, @Valid @RequestBody RoomDTO room) {
 		return roomService.update(id, room);
 	}
 
