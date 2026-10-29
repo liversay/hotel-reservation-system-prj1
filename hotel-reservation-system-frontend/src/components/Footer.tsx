@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 
 
 export default function Footer() {
@@ -5,9 +6,10 @@ export default function Footer() {
     <footer className="bg-white">
         <div className="relative mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:pt-24">
           <div className="absolute end-4 top-4 sm:end-6 sm:top-6 lg:end-8 lg:top-8">
-            <a
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="inline-block rounded-full bg-orange-600 p-2 text-white shadow transition hover:bg-orange-700 sm:p-3 lg:p-4"
-              href="#MainContent"
             >
               <span className="sr-only">Back to top</span>
 
@@ -23,7 +25,7 @@ export default function Footer() {
                   clipRule="evenodd"
                 />
               </svg>
-            </a>
+            </button>
           </div>
 
           <div className="lg:flex lg:items-end lg:justify-between">
@@ -45,15 +47,15 @@ export default function Footer() {
               className="mt-12 flex flex-wrap justify-center gap-6 md:gap-8 lg:mt-0 lg:justify-end lg:gap-12"
             >
               <li>
-                <a className="text-gray-700 transition hover:text-gray-700/75" href="#"> Home </a>
+                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/"> Home </Link>
               </li>
 
               <li>
-                <a className="text-gray-700 transition hover:text-gray-700/75" href="#"> Rooms </a>
+                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/products"> Rooms </Link>
               </li>
 
               <li>
-                <a className="text-gray-700 transition hover:text-gray-700/75" href="#"> About Us </a>
+                <Link className="text-gray-700 transition hover:text-gray-700/75" to="/about"> About Us </Link>
               </li>
             </ul>
           </div>

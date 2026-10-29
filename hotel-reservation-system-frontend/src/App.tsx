@@ -9,6 +9,10 @@ import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import BookRoom from './pages/BookRoom';
 import MyReservations from './pages/MyReservations';
+import Register from './pages/Register';
+import NotFound from './pages/NotFound';
+import RequireAuth from './auth/RequireAuth';
+import RequireAdmin from './auth/RequireAdmin';
 
 function App() {
 
@@ -16,14 +20,16 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin" element={<RequireAdmin><AdminPanel /></RequireAdmin>} />
         <Route path="/products" element={<Product />} /> {/* Ruta para Products */}
         <Route path="/about" element={<About />} /> 
         <Route path="/productDetail" element={<RoomDetails />} /> 
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/rooms/:id" element={<RoomDetails />} /> {/* placeholder: la Tarea 4 lo implementa */}
         <Route path="/book/:roomId" element={<BookRoom />} />
-        <Route path="/my-reservations" element={<MyReservations />} />
-        {/* Agrega otras rutas aquí */}
+        <Route path="/my-reservations" element={<RequireAuth><MyReservations /></RequireAuth>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   )

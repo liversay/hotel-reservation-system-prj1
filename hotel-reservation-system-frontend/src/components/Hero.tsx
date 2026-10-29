@@ -21,7 +21,7 @@ export default function Hero() {
               Choose from more than 5,000 accommodations... Don't miss out!
             </p>
             <div className="mt-4 md:mt-8">
-              <Button content="Explore Hotels" className="px-12 py-3"/>
+              <Button to="/products" content="Explore Hotels" className="px-12 py-3"/>
             </div>
           </div>
         </div>
