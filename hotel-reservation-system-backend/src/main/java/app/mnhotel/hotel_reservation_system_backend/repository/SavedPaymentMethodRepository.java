@@ -11,6 +11,8 @@ import app.mnhotel.hotel_reservation_system_backend.entity.SavedPaymentMethod;
 @Repository
 public interface SavedPaymentMethodRepository extends JpaRepository<SavedPaymentMethod, Long> {
 
+	void deleteByUserId(Long userId);
+
 	List<SavedPaymentMethod> findByUserUsernameOrderByIdAsc(String username);
 
 	/** Siempre filtrado por dueno: evita acceder a metodos de otro usuario (IDOR). */

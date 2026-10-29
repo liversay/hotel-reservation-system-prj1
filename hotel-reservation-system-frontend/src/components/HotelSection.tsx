@@ -1,57 +1,45 @@
-import React from 'react'
-import ButtonGroup from './ButtonGroup';
-const hotels = [
-  {
-    id: 1,
-    name: 'Hotel Grand',
-    location: 'New York',
-    description: 'A luxurious stay in the heart of the city.',
-    rating: 4.5,
-    roomIds: [101, 102, 103],
-    reviews: [{ id: 1, content: 'Great stay!' }, { id: 2, content: 'Very comfortable.' }]
-  },
-  {
-    id: 2,
-    name: 'Ocean View Inn',
-    location: 'California',
-    description: 'Beautiful views and excellent service.',
-    rating: 4.2,
-    roomIds: [201, 202],
-    reviews: [{ id: 3, content: 'Fantastic views!' }]
-  }
-];
-export default function Dashboard() {
-  return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-  <table className="min-w-full divide-y divide-gray-200">
-    <thead className="bg-gray-50">
-      <tr>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rooms</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviews</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-gray-200">
-    {hotels.map((hotel) => (
-            <tr key={hotel.id}>
-              <td className="px-6 py-4 whitespace-nowrap">{hotel.id}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{hotel.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{hotel.location}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{hotel.description}</td>
-              <td className="px-6 py-4 whitespace-nowrap"><span>{hotel.rating}</span></td>
-              <td className="px-6 py-4 whitespace-nowrap">{hotel.roomIds.length} Rooms</td>
-              <td className="px-6 py-4 whitespace-nowrap">{hotel.reviews.length} Reviews</td>
-              <td className="px-6 py-4 whitespace-nowrap"><ButtonGroup/></td>
-            </tr>
-          ))}
-    </tbody>
-  </table>
-</div>
+import CrudPanel from './CrudPanel'
+import { api } from '../api/client'
 
+interface Hotel {
+  id: number
+  name: string
+  location: string
+  description: string
+  rating: number
+}
+
+const body = (v: Record<string, string>) =>
+  JSON.stringify({ name: v.name, location: v.location, description: v.description, rating: v.rating === '' ? null : Number(v.rating) })
+
+// Definidos fuera del componente para tener identidad estable (CrudPanel recarga al cambiar `load`).
+const load = async () => (await api<Hotel[] | undefined>('/api/hotel/get-all')) ?? [] // el backend responde 204 si no hay hoteles
+const create = (v: Record<string, string>) => api('/api/hotel/registration-hotel', { method: 'POST', body: body(v) })
+const update = (h: Hotel, v: Record<string, string>) => api(`/api/hotel/update-hotel/${h.id}`, { method: 'PUT', body: body(v) })
+const remove = (h: Hotel) => api(`/api/hotel/delete-hotel/${h.id}`, { method: 'DELETE' })
+
+export default function HotelSection() {
+  return (
+    <CrudPanel<Hotel>
+      title="Hoteles"
+      columns={[
+        { label: 'ID', render: (h) => h.id },
+        { label: 'Nombre', render: (h) => h.name },
+        { label: 'Ubicación', render: (h) => h.location },
+        { label: 'Descripción', render: (h) => h.description },
+        { label: 'Rating', render: (h) => h.rating },
+      ]}
+      fields={[
+        { name: 'name', label: 'Nombre', required: true },
+        { name: 'location', label: 'Ubicación' },
+        { name: 'description', label: 'Descripción' },
+        { name: 'rating', label: 'Rating (0-5)', type: 'number' },
+      ]}
+      load={load}
+      create={create}
+      update={update}
+      remove={remove}
+      toValues={(h) => ({ name: h.name ?? '', location: h.location ?? '', description: h.description ?? '', rating: h.rating?.toString() ?? '' })}
+    />
   )
 }

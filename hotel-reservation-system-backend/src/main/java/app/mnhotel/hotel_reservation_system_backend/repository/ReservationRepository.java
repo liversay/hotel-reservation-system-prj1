@@ -23,5 +23,9 @@ public interface ReservationRepository extends JpaRepository<Reservation,Long>{
 	@Query("select r from Reservation r where r.status <> 'CANCELLED' and r.startDate < :to and r.endDate > :from")
 	List<Reservation> findActiveBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
+	boolean existsByRoomId(Long roomId);
+
+	boolean existsByUserId(Long userId);
+
 	List<Reservation> findByUserUsernameOrderByStartDateDesc(String username);
 }

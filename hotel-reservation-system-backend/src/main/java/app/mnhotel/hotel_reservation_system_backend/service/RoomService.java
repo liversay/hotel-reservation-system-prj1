@@ -12,7 +12,13 @@ public interface RoomService {
 
 	RoomDTO findById(Long id);
 
+	List<RoomDTO> findAll();
+
 	RoomDTO create(RoomDTO room);
+
+	RoomDTO update(Long id, RoomDTO room);
+
+	void delete(Long id);
 
 	List<DayAvailabilityDTO> availability(Long roomId, YearMonth month);
 }

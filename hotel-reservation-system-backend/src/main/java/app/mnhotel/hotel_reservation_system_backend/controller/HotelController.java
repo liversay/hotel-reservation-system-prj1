@@ -37,6 +37,8 @@ public class HotelController {
 	    	    try {
 	    		        hotelService.createHotel(hotelRequest);
 	    		        return ResponseEntity.ok(new ApiResponse("El Hotel se registró correctamente"));
+	    		    } catch (app.mnhotel.hotel_reservation_system_backend.exception.BadRequestException e) {
+	    		        throw e;
 	    		    } catch (Exception e) {
 	    		        e.printStackTrace(); // Para depuración
 	    		        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -48,24 +50,22 @@ public class HotelController {
 	// API para elimanar un hotel by ID.
 	@DeleteMapping("/delete-hotel/{id}")
 	public ResponseEntity<ApiResponse> deleteHotel(@PathVariable Long id) throws Exception {
-		 try {
-			 	hotelService.deleteHotel(id);
-			 	return ResponseEntity.ok(new ApiResponse("El hotel se elimino correctamente"));
-	        } catch (RuntimeException e) {
-	            return ResponseEntity.noContent().build();
-	        }
+		hotelService.deleteHotel(id); // 404 / 409 los resuelve GlobalExceptionHandler
+		return ResponseEntity.ok(new ApiResponse("El hotel se elimino correctamente"));
 	}
 	
 	// API para editar un hotel by ID.
 	@PutMapping("/update-hotel/{id}")
 	public ResponseEntity<ApiResponse> updateHotel(@PathVariable Long id, @RequestBody HotelDTO hotelDTO) {
+		    hotelDTO.setId(id);
 		    try {
-		    	hotelDTO.setId(id);
 		        return ResponseEntity.ok(hotelService.updateHotelData(hotelDTO));
+		    } catch (app.mnhotel.hotel_reservation_system_backend.exception.ResourceNotFoundException e) {
+		        throw e;
 		    } catch (Exception e) {
 		        e.printStackTrace(); // Para depuración
 		        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse("Error al obtener el hotel: " + e.getMessage()));
+                        .body(new ApiResponse("Error al actualizar el hotel: " + e.getMessage()));
 		    }
 	}
 	
