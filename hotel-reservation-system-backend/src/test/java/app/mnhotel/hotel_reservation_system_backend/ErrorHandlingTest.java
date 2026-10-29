@@ -60,7 +60,7 @@ class ErrorHandlingTest extends TestSupport {
 		Room room = newRoom(100);
 		mvc.perform(get("/api/rooms/" + room.getId() + "/availability").param("month", "bad"))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").isNotEmpty())
+			.andExpect(jsonPath("$.message").value("ParÃ¡metro con formato invÃ¡lido"))
 			.andExpect(jsonPath("$.trace").doesNotExist());
 	}
 

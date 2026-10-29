@@ -33,10 +33,10 @@ public class PaymentMethodServiceImp implements PaymentMethodService {
 	public PaymentMethodDTO save(String username, PaymentMethodRequest req) {
 		String pan = req.getCardNumber().replaceAll("[\\s-]", "");
 		if (!isValidPan(pan)) {
-			throw new BadRequestException("Numero de tarjeta invalido");
+			throw new BadRequestException("NÃºmero de tarjeta invÃ¡lido");
 		}
 		if (isExpired(req.getExpMonth(), req.getExpYear())) {
-			throw new BadRequestException("La tarjeta esta vencida");
+			throw new BadRequestException("La tarjeta estÃ¡ vencida");
 		}
 		User user = userRepository.findByUsername(username)
 				.orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
@@ -80,7 +80,7 @@ public class PaymentMethodServiceImp implements PaymentMethodService {
 
 	private SavedPaymentMethod find(String username, Long id) {
 		return repository.findByIdAndUserUsername(id, username)
-				.orElseThrow(() -> new ResourceNotFoundException("Metodo de pago no encontrado"));
+				.orElseThrow(() -> new ResourceNotFoundException("MÃ©todo de pago no encontrado"));
 	}
 
 	private void clearDefault(String username) {

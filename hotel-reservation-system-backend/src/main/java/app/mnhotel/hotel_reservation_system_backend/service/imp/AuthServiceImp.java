@@ -56,7 +56,7 @@ public class AuthServiceImp implements AuthService {
 		String hash = user != null ? user.getPassword() : dummyHash;
 		boolean ok = passwordEncoder.matches(request.getPassword(), hash);
 		if (user == null || !ok) {
-			throw new BadCredentialsException("Credenciales invalidas");
+			throw new BadCredentialsException("Credenciales invÃ¡lidas");
 		}
 		return toResponse(user);
 	}

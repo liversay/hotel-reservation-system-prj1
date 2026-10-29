@@ -52,7 +52,7 @@ public class HotelController {
 	@DeleteMapping("/delete-hotel/{id}")
 	public ResponseEntity<ApiResponse> deleteHotel(@PathVariable Long id) throws Exception {
 		hotelService.deleteHotel(id); // 404 / 409 los resuelve GlobalExceptionHandler
-		return ResponseEntity.ok(new ApiResponse("El hotel se elimino correctamente"));
+		return ResponseEntity.ok(new ApiResponse("El hotel se eliminÃ³ correctamente"));
 	}
 	
 	// API para editar un hotel by ID.

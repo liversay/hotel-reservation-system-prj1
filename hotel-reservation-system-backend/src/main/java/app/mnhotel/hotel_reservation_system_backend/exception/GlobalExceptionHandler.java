@@ -37,23 +37,23 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<ApiResponse> validation(MethodArgumentNotValidException e) {
 		String msg = e.getBindingResult().getFieldErrors().stream()
-				.map(f -> f.getField() + ": " + f.getDefaultMessage()).findFirst().orElse("Solicitud invalida");
+				.map(f -> f.getField() + ": " + f.getDefaultMessage()).findFirst().orElse("Solicitud invÃ¡lida");
 		return build(HttpStatus.BAD_REQUEST, msg);
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	ResponseEntity<ApiResponse> unreadable(HttpMessageNotReadableException e) {
-		return build(HttpStatus.BAD_REQUEST, "Cuerpo de la solicitud invalido o malformado");
+		return build(HttpStatus.BAD_REQUEST, "Cuerpo de la solicitud invÃ¡lido o malformado");
 	}
 
 	@ExceptionHandler({ MethodArgumentTypeMismatchException.class, DateTimeParseException.class })
 	ResponseEntity<ApiResponse> invalidFormat(Exception e) {
-		return build(HttpStatus.BAD_REQUEST, "Parametro con formato invalido");
+		return build(HttpStatus.BAD_REQUEST, "ParÃ¡metro con formato invÃ¡lido");
 	}
 
 	@ExceptionHandler(MissingServletRequestParameterException.class)
 	ResponseEntity<ApiResponse> missingParam(MissingServletRequestParameterException e) {
-		return build(HttpStatus.BAD_REQUEST, "Falta el parametro: " + e.getParameterName());
+		return build(HttpStatus.BAD_REQUEST, "Falta el parÃ¡metro: " + e.getParameterName());
 	}
 
 	@ExceptionHandler(NoResourceFoundException.class)
@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BadCredentialsException.class)
 	ResponseEntity<ApiResponse> badCredentials(BadCredentialsException e) {
-		return build(HttpStatus.UNAUTHORIZED, "Credenciales invalidas");
+		return build(HttpStatus.UNAUTHORIZED, "Credenciales invÃ¡lidas");
 	}
 
 	@ExceptionHandler(AccessDeniedException.class)

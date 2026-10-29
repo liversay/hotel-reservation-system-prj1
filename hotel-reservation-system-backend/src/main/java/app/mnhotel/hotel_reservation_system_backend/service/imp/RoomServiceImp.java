@@ -45,7 +45,7 @@ public class RoomServiceImp implements RoomService {
 	@Transactional(readOnly = true)
 	public RoomDTO findById(Long id) {
 		return toDTO(roomRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada: " + id)));
+				.orElseThrow(() -> new ResourceNotFoundException("HabitaciÃ³n no encontrada: " + id)));
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class RoomServiceImp implements RoomService {
 	@Transactional
 	public RoomDTO update(Long id, RoomDTO dto) {
 		Room room = roomRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada: " + id));
+				.orElseThrow(() -> new ResourceNotFoundException("HabitaciÃ³n no encontrada: " + id));
 		if (dto.getPricePerNight() == null || dto.getPricePerNight() <= 0) {
 			throw new BadRequestException("pricePerNight debe ser mayor que 0");
 		}
@@ -77,10 +77,10 @@ public class RoomServiceImp implements RoomService {
 	@Transactional
 	public void delete(Long id) {
 		if (!roomRepository.existsById(id)) {
-			throw new ResourceNotFoundException("Habitacion no encontrada: " + id);
+			throw new ResourceNotFoundException("HabitaciÃ³n no encontrada: " + id);
 		}
 		if (reservationRepository.existsByRoomId(id)) {
-			throw new ConflictException("No se puede eliminar: la habitacion tiene reservas asociadas");
+			throw new ConflictException("No se puede eliminar: la habitaciÃ³n tiene reservas asociadas");
 		}
 		roomRepository.deleteById(id);
 	}
@@ -105,7 +105,7 @@ public class RoomServiceImp implements RoomService {
 	@Transactional(readOnly = true)
 	public List<DayAvailabilityDTO> availability(Long roomId, YearMonth month) {
 		if (!roomRepository.existsById(roomId)) {
-			throw new ResourceNotFoundException("Habitacion no encontrada: " + roomId);
+			throw new ResourceNotFoundException("HabitaciÃ³n no encontrada: " + roomId);
 		}
 		LocalDate first = month.atDay(1);
 		LocalDate lastExclusive = month.plusMonths(1).atDay(1);
