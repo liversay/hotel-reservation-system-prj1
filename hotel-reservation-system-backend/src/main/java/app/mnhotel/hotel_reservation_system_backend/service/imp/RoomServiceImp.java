@@ -14,6 +14,7 @@ import app.mnhotel.hotel_reservation_system_backend.entity.Hotel;
 import app.mnhotel.hotel_reservation_system_backend.entity.Reservation;
 import app.mnhotel.hotel_reservation_system_backend.entity.Room;
 import app.mnhotel.hotel_reservation_system_backend.exception.BadRequestException;
+import app.mnhotel.hotel_reservation_system_backend.exception.ConflictException;
 import app.mnhotel.hotel_reservation_system_backend.exception.ResourceNotFoundException;
 import app.mnhotel.hotel_reservation_system_backend.repository.HotelRepository;
 import app.mnhotel.hotel_reservation_system_backend.repository.ReservationRepository;
@@ -45,6 +46,43 @@ public class RoomServiceImp implements RoomService {
 	public RoomDTO findById(Long id) {
 		return toDTO(roomRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada: " + id)));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<RoomDTO> findAll() {
+		return roomRepository.findAll().stream().map(RoomServiceImp::toDTO).toList();
+	}
+
+	@Override
+	@Transactional
+	public RoomDTO update(Long id, RoomDTO dto) {
+		Room room = roomRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Habitacion no encontrada: " + id));
+		if (dto.getPricePerNight() == null || dto.getPricePerNight() <= 0) {
+			throw new BadRequestException("pricePerNight debe ser mayor que 0");
+		}
+		if (dto.getHotelId() != null && !dto.getHotelId().equals(room.getHotel().getId())) {
+			room.setHotel(hotelRepository.findById(dto.getHotelId())
+					.orElseThrow(() -> new ResourceNotFoundException("Hotel no encontrado: " + dto.getHotelId())));
+		}
+		room.setRoomNumber(dto.getRoomNumber());
+		room.setType(dto.getType());
+		room.setPricePerNight(dto.getPricePerNight());
+		if (dto.getAvailability() != null) room.setAvailbility(dto.getAvailability());
+		return toDTO(room);
+	}
+
+	@Override
+	@Transactional
+	public void delete(Long id) {
+		if (!roomRepository.existsById(id)) {
+			throw new ResourceNotFoundException("Habitacion no encontrada: " + id);
+		}
+		if (reservationRepository.existsByRoomId(id)) {
+			throw new ConflictException("No se puede eliminar: la habitacion tiene reservas asociadas");
+		}
+		roomRepository.deleteById(id);
 	}
 
 	@Override

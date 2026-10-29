@@ -1,42 +1,43 @@
-import React from 'react'
-import ButtonGroup from './ButtonGroup'
+import CrudPanel from './CrudPanel'
+import { api } from '../api/client'
+
+interface User {
+  id: number
+  username: string
+  email: string
+  role: string
+}
+
+const ROLES = [{ value: 'USER', label: 'USER' }, { value: 'ADMIN', label: 'ADMIN' }]
+
+const load = () => api<User[]>('/api/admin/users')
+const create = (v: Record<string, string>) => api('/api/admin/users', { method: 'POST', body: JSON.stringify(v) })
+// En edición, la contraseña vacía significa "no cambiar" (el backend la ignora).
+const update = (u: User, v: Record<string, string>) =>
+  api(`/api/admin/users/${u.id}`, { method: 'PUT', body: JSON.stringify({ email: v.email, role: v.role, password: v.password }) })
+const remove = (u: User) => api(`/api/admin/users/${u.id}`, { method: 'DELETE' })
 
 export default function UserSection() {
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {[
-            { username: 'john_doe', email: 'john@example.com', role: 'Admin', status: 'Active' },
-            { username: 'jane_doe', email: 'jane@example.com', role: 'User', status: 'Inactive' },
-            { username: 'mike_smith', email: 'mike@example.com', role: 'Moderator', status: 'Active' },
-          ].map((user) => (
-            <tr key={user.username}>
-              <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  user.status === 'Active' ? 'bg-green-100 text-green-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {user.status}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap"><ButtonGroup/></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <CrudPanel<User>
+      title="Usuarios"
+      columns={[
+        { label: 'ID', render: (u) => u.id },
+        { label: 'Usuario', render: (u) => u.username },
+        { label: 'Email', render: (u) => u.email },
+        { label: 'Rol', render: (u) => u.role },
+      ]}
+      fields={[
+        { name: 'username', label: 'Usuario', required: true, createOnly: true },
+        { name: 'email', label: 'Email', type: 'email', required: true },
+        { name: 'password', label: 'Contraseña (mín. 8; vacío = no cambiar)', type: 'password', requiredOnCreate: true },
+        { name: 'role', label: 'Rol', type: 'select', options: ROLES },
+      ]}
+      load={load}
+      create={create}
+      update={update}
+      remove={remove}
+      toValues={(u) => ({ username: u.username, email: u.email, password: '', role: u.role })}
+    />
   )
 }
