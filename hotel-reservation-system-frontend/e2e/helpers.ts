@@ -47,19 +47,32 @@ export async function createRoom(
   return (await res.json()).id
 }
 
-/** Borra (mejor esfuerzo) sus habitaciones y luego el hotel. */
+/**
+ * DELETE de limpieza: acepta 200/204/404 (ya borrado). El backend conserva a proposito el historico:
+ * un usuario o habitacion con reservas responde 409 "...reservas..." y un hotel con habitaciones
+ * conservadas tambien; ese 409 (y solo ese) se tolera. Cualquier otro estado lanza con el detalle.
+ */
+async function del(request: APIRequestContext, token: string, url: string) {
+  const res = await request.delete(url, { headers: auth(token) })
+  if ([200, 204, 404].includes(res.status())) return
+  const body = await res.text()
+  if (res.status() === 409 && /reservas|habitacion/i.test(body)) return
+  throw new Error(`cleanup DELETE ${url} -> ${res.status()}: ${body}`)
+}
+
+/** Borra sus habitaciones y luego el hotel. */
 export async function cleanupHotel(request: APIRequestContext, token: string, hotelId: number) {
   const rooms = await (await request.get(`${API}/api/rooms`)).json()
   for (const r of rooms.filter((x: { hotelId: number }) => x.hotelId === hotelId)) {
-    await request.delete(`${API}/api/rooms/${r.id}`, { headers: auth(token) })
+    await del(request, token, `${API}/api/rooms/${r.id}`)
   }
-  await request.delete(`${API}/api/hotel/delete-hotel/${hotelId}`, { headers: auth(token) })
+  await del(request, token, `${API}/api/hotel/delete-hotel/${hotelId}`)
 }
 
 export async function cleanupUsers(request: APIRequestContext, token: string, prefix: string) {
   const users = await (await request.get(`${API}/api/admin/users`, { headers: auth(token) })).json()
   for (const u of users.filter((x: { username: string }) => x.username.startsWith(prefix))) {
-    await request.delete(`${API}/api/admin/users/${u.id}`, { headers: auth(token) })
+    await del(request, token, `${API}/api/admin/users/${u.id}`)
   }
 }
 

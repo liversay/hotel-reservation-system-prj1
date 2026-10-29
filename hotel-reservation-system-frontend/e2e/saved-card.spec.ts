@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import {
-  adminToken, API, auth, cleanupHotel, cleanupUsers, createHotel, createRoom, day, goNextMonth, nextMonthDate,
+  addCardViaApi, adminToken, API, auth, cleanupHotel, cleanupUsers, createHotel, createRoom, day, goNextMonth, nextMonthDate,
   registerUser, uid, useSession,
 } from './helpers'
 
@@ -19,8 +19,8 @@ test.beforeAll(async ({ request }) => {
 })
 
 test.afterAll(async ({ request }) => {
-  await cleanupHotel(request, admin, hotelId)
   await cleanupUsers(request, admin, username)
+  await cleanupHotel(request, admin, hotelId)
 })
 
 test('guardar una tarjeta y reservar con un clic con la guardada', async ({ page, request }) => {
@@ -59,8 +59,10 @@ test('guardar una tarjeta y reservar con un clic con la guardada', async ({ page
   expect(mine[0].payments?.length ?? 0).toBeGreaterThan(0)
 })
 
-test('con una tarjeta ya guardada se preselecciona y se reserva con un clic al recargar', async ({ page }) => {
-  await useSession(page, token)
+test('con una tarjeta ya guardada se preselecciona y se reserva con un clic', async ({ page, request }) => {
+  const own = await registerUser(request, `${username}b`) // usuario y tarjeta propios: no depende del test anterior
+  await addCardViaApi(request, own.token)
+  await useSession(page, own.token)
   await page.goto(`/book/${roomId}`)
   await expect(page.getByRole('radio')).toBeChecked()
   await goNextMonth(page)

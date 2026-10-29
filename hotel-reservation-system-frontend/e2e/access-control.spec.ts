@@ -19,8 +19,8 @@ test.beforeAll(async ({ request }) => {
 })
 
 test.afterAll(async ({ request }) => {
-  await cleanupHotel(request, admin, hotelId)
   await cleanupUsers(request, admin, username)
+  await cleanupHotel(request, admin, hotelId)
 })
 
 test('visitante a /my-reservations va a /login con next y vuelve tras iniciar sesión', async ({ page }) => {

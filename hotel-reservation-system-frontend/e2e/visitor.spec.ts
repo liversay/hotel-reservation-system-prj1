@@ -16,8 +16,8 @@ test.beforeAll(async ({ request }) => {
 })
 
 test.afterAll(async ({ request }) => {
-  await cleanupHotel(request, admin, hotelId)
   await cleanupUsers(request, admin, username)
+  await cleanupHotel(request, admin, hotelId)
 })
 
 test('home muestra hoteles reales del backend', async ({ page }) => {
@@ -91,12 +91,25 @@ test('registro rechaza contraseña corta con mensaje en español', async ({ page
 
 test('enlaces de navbar y footer no son enlaces muertos', async ({ page }) => {
   await page.goto('/')
+  const footerLinks = page.getByRole('contentinfo').getByRole('link')
+  expect(await footerLinks.count()).toBeGreaterThan(0)
   const hrefs = await page.locator('a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))
   expect(hrefs.length).toBeGreaterThan(5)
+  for (const h of await footerLinks.evaluateAll((as) => as.map((a) => a.getAttribute('href')))) expect(hrefs).toContain(h)
   for (const h of hrefs) {
     expect(h, 'href').toBeTruthy()
     expect(h).not.toMatch(/^#|#$/)
   }
+
+  // Cada href interno resuelve a una ruta real de la app (no cae en el 404).
+  const internal = [...new Set(hrefs.filter((h): h is string => !!h && h.startsWith('/')))]
+  expect(internal.length).toBeGreaterThan(3)
+  for (const h of internal) {
+    await page.goto(h)
+    await expect(page.getByRole('heading', { name: 'Página no encontrada' }), h).toHaveCount(0)
+    await expect(page.locator('main, form, header').first(), h).toBeVisible()
+  }
+  await page.goto('/')
 
   const nav = page.getByRole('navigation', { name: 'Global' })
   await nav.getByRole('link', { name: 'Rooms' }).click()

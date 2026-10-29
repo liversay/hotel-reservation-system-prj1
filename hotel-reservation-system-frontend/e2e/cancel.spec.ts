@@ -21,8 +21,8 @@ test.beforeAll(async ({ request }) => {
 })
 
 test.afterAll(async ({ request }) => {
-  await cleanupHotel(request, admin, hotelId)
   await cleanupUsers(request, admin, username)
+  await cleanupHotel(request, admin, hotelId)
 })
 
 test('cancelar con confirmación, estado Cancelada, reembolso y disponibilidad restaurada', async ({ page, request }) => {

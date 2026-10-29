@@ -53,7 +53,8 @@ test('admin crea, edita y borra un hotel; rating fuera de 1..5 se rechaza', asyn
   await edit.getByLabel('Rating').fill('5')
   await edit.getByRole('button', { name: 'Guardar' }).click()
   await expect(rowOf(page, hotelRenamed)).toBeVisible()
-  await expect(rowOf(page, hotelRenamed)).toContainText('5')
+  // Columnas: ID, Nombre, Ubicación, Descripción, Rating -> la celda 5 (índice 4) es el rating.
+  await expect(rowOf(page, hotelRenamed).getByRole('cell').nth(4)).toHaveText(/^5(\.0)?$/)
 
   await rowOf(page, hotelRenamed).getByRole('button', { name: 'Eliminar' }).click()
   await expect(page.getByText('¿Eliminar?')).toBeVisible()
