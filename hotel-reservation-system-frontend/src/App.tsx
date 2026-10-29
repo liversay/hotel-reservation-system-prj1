@@ -26,7 +26,7 @@ function App() {
         <Route path="/productDetail" element={<RoomDetails />} /> 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/rooms/:id" element={<RoomDetails />} /> {/* placeholder: la Tarea 4 lo implementa */}
+        <Route path="/rooms/:id" element={<RoomDetails />} />
         <Route path="/book/:roomId" element={<BookRoom />} />
         <Route path="/my-reservations" element={<RequireAuth><MyReservations /></RequireAuth>} />
         <Route path="*" element={<NotFound />} />
