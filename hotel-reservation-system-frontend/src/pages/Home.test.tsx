@@ -38,4 +38,12 @@ describe('Home', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
     expect(await screen.findByTestId('where')).toHaveTextContent('/products?q=suite')
   })
+
+  it('codifica espacios y tildes en el término buscado', async () => {
+    stubCatalog()
+    renderHome()
+    await userEvent.type(screen.getByLabelText('Buscar'), ' suite junior ñ ')
+    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
+    expect(await screen.findByTestId('where')).toHaveTextContent('/products?q=' + encodeURIComponent('suite junior ñ'))
+  })
 })

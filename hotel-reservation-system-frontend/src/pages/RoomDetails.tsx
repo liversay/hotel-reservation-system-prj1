@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { fetchHotel, fetchRoom, type Hotel, type Room } from '../api/hotels'
+import { fetchHotel, fetchRoom, friendlyError, type Hotel, type Room } from '../api/hotels'
 import { ApiError } from '../api/client'
 import Header from '../components/Header'
 import HeaderBanner from '../components/HeaderBanner'
@@ -21,7 +21,7 @@ export default function RoomDetails() {
     setNotFound(false)
     setRoom(null)
     setHotel(null)
-    if (!id) {
+    if (!id || !/^\d+$/.test(id)) {
       setNotFound(true)
       setLoading(false)
       return
@@ -35,7 +35,7 @@ export default function RoomDetails() {
       .catch((e: Error) => {
         if (!alive) return
         if (e instanceof ApiError && (e.status === 404 || e.status === 400)) setNotFound(true)
-        else setError(e.message)
+        else setError(friendlyError(e))
       })
       .finally(() => alive && setLoading(false))
     return () => {

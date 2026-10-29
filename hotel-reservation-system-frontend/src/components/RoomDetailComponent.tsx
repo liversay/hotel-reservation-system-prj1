@@ -12,7 +12,7 @@ export default function RoomDetailComponent({ room, hotel }: { room: Room; hotel
         <div>
           <h2 className="text-3xl font-bold">{room.type}</h2>
           <p className="text-gray-500">Habitación {room.roomNumber}</p>
-          <p className="text-2xl font-semibold mt-2">${room.pricePerNight} / noche</p>
+          <p className="text-2xl font-semibold mt-2">{room.pricePerNight == null ? 'Precio no disponible' : `$${room.pricePerNight} / noche`}</p>
           <p className={room.availability === false ? 'text-red-600' : 'text-green-700'}>
             {room.availability === false ? 'No disponible actualmente' : 'Disponible'}
           </p>

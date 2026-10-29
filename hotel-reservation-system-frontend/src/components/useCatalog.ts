@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchCatalog, type Hotel, type Room } from '../api/hotels'
+import { fetchCatalog, friendlyError, type Hotel, type Room } from '../api/hotels'
 
 export interface CatalogState {
   loading: boolean
@@ -14,7 +14,7 @@ export function useCatalog(): CatalogState {
     let alive = true
     fetchCatalog()
       .then((c) => alive && setState({ loading: false, error: null, ...c }))
-      .catch((e: Error) => alive && setState({ loading: false, error: e.message, rooms: [], hotels: new Map() }))
+      .catch((e: Error) => alive && setState({ loading: false, error: friendlyError(e), rooms: [], hotels: new Map() }))
     return () => {
       alive = false
     }

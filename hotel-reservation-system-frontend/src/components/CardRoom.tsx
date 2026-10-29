@@ -9,7 +9,7 @@ export default function CardRoom({ room, hotel }: { room: Room; hotel?: Hotel })
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-semibold text-black">{room.type} · Hab. {room.roomNumber}</h3>
-          <div className="text-2xl font-bold text-black">${room.pricePerNight}<span className="text-sm font-normal text-gray-500"> / noche</span></div>
+          <div className="text-2xl font-bold text-black">{room.pricePerNight == null ? <span className="text-base">Precio no disponible</span> : <>${room.pricePerNight}<span className="text-sm font-normal text-gray-500"> / noche</span></>}</div>
         </div>
         <div className="text-gray-500">
           <p>{hotel?.name ?? 'Hotel'}</p>

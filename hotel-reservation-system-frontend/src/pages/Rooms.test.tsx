@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Rooms from './Rooms'
-import { fail, stubCatalog } from '../test/catalogMock'
+import { fail, ok, stubCatalog } from '../test/catalogMock'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -79,5 +79,25 @@ describe('Rooms (/products)', () => {
     renderAt()
     expect(await screen.findAllByRole('link', { name: 'Ver disponibilidad' })).toHaveLength(3)
     expect(within(document.body).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('un precio máximo inválido se ignora', async () => {
+    stubCatalog()
+    renderAt()
+    await screen.findAllByRole('link', { name: 'Ver disponibilidad' })
+    await userEvent.type(screen.getByLabelText('Precio máximo por noche'), '-5')
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
+    expect(screen.getAllByRole('link', { name: 'Ver disponibilidad' })).toHaveLength(3)
+  })
+
+  it('con tope de precio, una habitación sin precio no pasa el filtro', async () => {
+    const noPrice = [{ id: 20, roomNumber: '9', type: 'Rara', pricePerNight: null, availability: true, hotelId: 1 }, { id: 21, roomNumber: '8', type: 'Barata', pricePerNight: 10, availability: true, hotelId: 1 }]
+    stubCatalog({ '/api/rooms': ok(noPrice) })
+    renderAt()
+    expect(await screen.findByText('Precio no disponible')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Precio máximo por noche'), '50')
+    await userEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
+    expect(screen.queryByText('Precio no disponible')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Ver disponibilidad' })).toHaveLength(1)
   })
 })

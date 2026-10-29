@@ -4,7 +4,7 @@ export interface Room {
   id: number
   roomNumber: string
   type: string
-  pricePerNight: number
+  pricePerNight: number | null
   availability?: boolean | null
   hotelId?: number | null
 }
@@ -26,8 +26,8 @@ export interface RoomFilters {
 // get-all responde 204 sin cuerpo cuando no hay datos: api() devuelve undefined.
 export const fetchRooms = async () => (await api<Room[] | undefined>('/api/rooms')) ?? []
 export const fetchHotels = async () => (await api<Hotel[] | undefined>('/api/hotel/get-all')) ?? []
-export const fetchRoom = (id: string | number) => api<Room>(`/api/rooms/${id}`)
-export const fetchHotel = (id: string | number) => api<Hotel>(`/api/hotel/get-hotel/${id}`)
+export const fetchRoom = (id: string | number) => api<Room>(`/api/rooms/${encodeURIComponent(String(id))}`)
+export const fetchHotel = (id: string | number) => api<Hotel>(`/api/hotel/get-hotel/${encodeURIComponent(String(id))}`)
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -35,7 +35,7 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 export function filterRooms(rooms: Room[], hotels: Map<number, Hotel>, { text, maxPrice }: RoomFilters): Room[] {
   const needle = norm(text.trim())
   return rooms.filter((r) => {
-    if (maxPrice !== null && r.pricePerNight > maxPrice) return false
+    if (maxPrice !== null && (r.pricePerNight == null || r.pricePerNight > maxPrice)) return false
     if (!needle) return true
     const hotel = r.hotelId != null ? hotels.get(r.hotelId) : undefined
     const haystack = [r.roomNumber, r.type, hotel?.name, hotel?.location].filter(Boolean).join(' ')
@@ -47,4 +47,9 @@ export function filterRooms(rooms: Room[], hotels: Map<number, Hotel>, { text, m
 export async function fetchCatalog() {
   const [rooms, hotels] = await Promise.all([fetchRooms(), fetchHotels().catch(() => [] as Hotel[])])
   return { rooms, hotels: new Map(hotels.map((h) => [h.id, h])) }
+}
+
+/** Traduce errores de red del navegador a un mensaje en español. */
+export function friendlyError(e: Error): string {
+  return e instanceof TypeError ? 'No se pudo conectar con el servidor. Inténtalo de nuevo.' : e.message
 }
