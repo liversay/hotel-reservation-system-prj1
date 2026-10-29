@@ -2,7 +2,6 @@ package app.mnhotel.hotel_reservation_system_backend.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,17 +35,13 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request, HttpServletRequest http) {
-		String key = request.getUsername() + "|" + http.getRemoteAddr();
-		if (loginAttempts.isBlocked(key)) {
-			throw new TooManyRequestsException("Demasiados intentos fallidos. Intenta de nuevo en 15 minutos");
+		// getRemoteAddr(): no se confia en X-Forwarded-For (lo puede falsificar el cliente).
+		String ip = http.getRemoteAddr();
+		if (!loginAttempts.tryAttempt(request.getUsername(), ip)) {
+			throw new TooManyRequestsException("Demasiados intentos. Inténtalo de nuevo en 15 minutos.");
 		}
-		try {
-			AuthResponse response = authService.login(request);
-			loginAttempts.reset(key);
-			return ResponseEntity.ok(response);
-		} catch (BadCredentialsException e) {
-			loginAttempts.recordFailure(key);
-			throw e;
-		}
+		AuthResponse response = authService.login(request);
+		loginAttempts.recordSuccess(request.getUsername(), ip);
+		return ResponseEntity.ok(response);
 	}
 }
