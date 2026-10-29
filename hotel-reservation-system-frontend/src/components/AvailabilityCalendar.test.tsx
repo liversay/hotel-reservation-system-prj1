@@ -40,6 +40,35 @@ describe('AvailabilityCalendar', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
+  it('las flechas cambian de mes y piden la disponibilidad del mes nuevo', async () => {
+    mockMonth([['2030-05-01', 'AVAILABLE']])
+    render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)
+    const title = screen.getByRole('heading', { level: 3 })
+    const start = title.textContent
+    await userEvent.click(screen.getByRole('button', { name: 'Mes siguiente' }))
+    expect(title.textContent).not.toBe(start)
+    await userEvent.click(screen.getByRole('button', { name: 'Mes anterior' }))
+    expect(title.textContent).toBe(start)
+    const urls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]))
+    expect(new Set(urls).size).toBe(2)
+  })
+
+  it('vuelve a pedir la disponibilidad cuando cambia refreshKey', async () => {
+    mockMonth([['2030-05-01', 'AVAILABLE']])
+    const { rerender } = render(<AvailabilityCalendar roomId={1} onChange={() => {}} refreshKey={0} />)
+    await screen.findByLabelText('2030-05-01 disponible')
+    expect(fetch).toHaveBeenCalledTimes(1)
+    rerender(<AvailabilityCalendar roomId={1} onChange={() => {}} refreshKey={1} />)
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
+  })
+
+  it('muestra un error legible en español si la red falla', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Failed to fetch')
+  })
+
   it('muestra un error si la API falla', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'boom', json: async () => ({}) }))
     render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)

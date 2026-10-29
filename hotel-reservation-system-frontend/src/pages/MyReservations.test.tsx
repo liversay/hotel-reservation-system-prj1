@@ -18,18 +18,32 @@ describe('MyReservations', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => list }))
     render(<MemoryRouter><MyReservations /></MemoryRouter>)
     await screen.findByText(/Hab. 101/)
-    expect(screen.getAllByText('Cancelar')).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Cancelar reserva' })).toHaveLength(1)
   })
 
-  it('cancela y actualiza el estado en pantalla', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [list[0]] })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ...list[0], status: 'CANCELLED' }) })
+  it('pide confirmación inline y permite mantener la reserva', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => [list[0]] })
     vi.stubGlobal('fetch', fetchMock)
     render(<MemoryRouter><MyReservations /></MemoryRouter>)
-    await userEvent.click(await screen.findByText('Cancelar'))
-    expect(await screen.findByText('CANCELLED')).toBeInTheDocument()
-    expect(screen.queryByText('Cancelar')).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar reserva' }))
+    expect(screen.getByText('¿Confirmar cancelación?')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'No, mantener' }))
+    expect(screen.queryByText('¿Confirmar cancelación?')).not.toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledTimes(1) // solo la carga de la lista, ningún PUT
+  })
+
+  it('cancela tras confirmar, muestra Cancelada y el reembolso', async () => {
+    const paid = { ...list[0], payments: [{ id: 9, amount: 200, status: 'PAID' }] }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => [paid] })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ...paid, status: 'CANCELLED', payments: [{ id: 9, amount: 200, status: 'REFUNDED' }] }) })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<MemoryRouter><MyReservations /></MemoryRouter>)
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar reserva' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }))
+    expect(await screen.findByText('Cancelada')).toBeInTheDocument()
+    expect(screen.getByText(/Reembolsado/)).toHaveTextContent('Reembolsado $200')
+    expect(screen.queryByRole('button', { name: 'Cancelar reserva' })).not.toBeInTheDocument()
   })
 
   it('muestra el error del backend al fallar', async () => {
@@ -38,7 +52,14 @@ describe('MyReservations', () => {
       .mockResolvedValueOnce({ ok: false, status: 400, statusText: 'Bad', json: async () => ({ message: 'No se puede cancelar' }) })
     vi.stubGlobal('fetch', fetchMock)
     render(<MemoryRouter><MyReservations /></MemoryRouter>)
-    await userEvent.click(await screen.findByText('Cancelar'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar reserva' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No se puede cancelar')
+  })
+
+  it('muestra un error legible si no hay conexión al cargar', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    render(<MemoryRouter><MyReservations /></MemoryRouter>)
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor. Inténtalo de nuevo.')
   })
 })

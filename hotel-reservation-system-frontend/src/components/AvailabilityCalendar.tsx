@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
+import { friendlyError } from '../utils/errors'
 import { leadingBlanks, selectDay, type DayAvailability, type DayStatus, type Range } from '../utils/calendar'
 
 interface Props {
   roomId: number
   onChange: (range: Range) => void
+  /** Al cambiar, vuelve a pedir la disponibilidad del mes (p. ej. tras reservar). */
+  refreshKey?: number
 }
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -16,7 +19,7 @@ const STYLES: Record<DayStatus, string> = {
   PAST: 'bg-gray-100 text-gray-300 cursor-not-allowed',
 }
 
-export default function AvailabilityCalendar({ roomId, onChange }: Props) {
+export default function AvailabilityCalendar({ roomId, onChange, refreshKey = 0 }: Props) {
   const today = new Date()
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() })
   const [days, setDays] = useState<DayAvailability[]>([])
@@ -30,11 +33,11 @@ export default function AvailabilityCalendar({ roomId, onChange }: Props) {
     setError(null)
     api<DayAvailability[]>(`/api/rooms/${roomId}/availability?month=${monthKey}`)
       .then((d) => !cancelled && setDays(d))
-      .catch((e: Error) => !cancelled && setError(e.message))
+      .catch((e: unknown) => !cancelled && setError(friendlyError(e)))
     return () => {
       cancelled = true
     }
-  }, [roomId, monthKey])
+  }, [roomId, monthKey, refreshKey])
 
   const statusByDate = useMemo(() => new Map(days.map((d) => [d.date, d.status])), [days])
 

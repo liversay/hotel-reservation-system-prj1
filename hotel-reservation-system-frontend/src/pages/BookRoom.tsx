@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiError, tokenStore } from '../api/client'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import SavedCards, { type PaymentMethod } from '../components/SavedCards'
+import { friendlyError } from '../utils/errors'
 import { nightsBetween, type Range } from '../utils/calendar'
 
 interface Room {
@@ -18,13 +19,14 @@ export default function BookRoom() {
   const [room, setRoom] = useState<Room | null>(null)
   const [range, setRange] = useState<Range>({ checkIn: null, checkOut: null })
   const [error, setError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [done, setDone] = useState<string | null>(null)
   const loggedIn = !!tokenStore.get()
   const [methods, setMethods] = useState<PaymentMethod[] | null>(null)
   const [methodId, setMethodId] = useState<number | null>(null)
 
   useEffect(() => {
-    api<Room>(`/api/rooms/${roomId}`).then(setRoom).catch((e: Error) => setError(e.message))
+    api<Room>(`/api/rooms/${roomId}`).then(setRoom).catch((e: unknown) => setError(friendlyError(e)))
   }, [roomId])
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function BookRoom() {
         setMethods(list)
         setMethodId((list.find((m) => m.defaultMethod) ?? list[0])?.id ?? null) // predeterminada preseleccionada
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: unknown) => setError(friendlyError(e)))
   }, [loggedIn])
 
   const nights = range.checkIn && range.checkOut ? nightsBetween(range.checkIn, range.checkOut) : 0
@@ -48,9 +50,10 @@ export default function BookRoom() {
         body: JSON.stringify({ roomId: Number(roomId), checkIn: range.checkIn, checkOut: range.checkOut, savedPaymentMethodId: methodId }),
       })
       setDone('¡Reserva confirmada!')
+      setRefreshKey((k) => k + 1) // recarga el mes para marcar los días recién reservados
     } catch (e) {
       // 409: alguien reservo esas fechas mientras se elegia; el calendario se refresca al cambiar de mes
-      setError(e instanceof ApiError && e.status === 409 ? 'Esas fechas ya no están disponibles. Elige otras.' : (e as Error).message)
+      setError(e instanceof ApiError && e.status === 409 ? 'Esas fechas ya no están disponibles. Elige otras.' : friendlyError(e))
     }
   }
 
@@ -58,7 +61,7 @@ export default function BookRoom() {
     <main className="mx-auto max-w-3xl space-y-4 p-6">
       <Link to="/" className="text-sm text-blue-700 underline">← Inicio</Link>
       <h1 className="text-2xl font-bold">Reservar habitación {room?.roomNumber} {room && `· ${room.type}`}</h1>
-      <AvailabilityCalendar roomId={Number(roomId)} onChange={setRange} />
+      <AvailabilityCalendar roomId={Number(roomId)} onChange={setRange} refreshKey={refreshKey} />
       {nights > 0 && room && (
         <p>{range.checkIn} → {range.checkOut} · {nights} noche(s) · <strong>${nights * room.pricePerNight}</strong></p>
       )}
