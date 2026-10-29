@@ -63,7 +63,7 @@ public class AuthServiceImp implements AuthService {
 
 	private AuthResponse toResponse(User user) {
 		return AuthResponse.builder()
-				.token(jwtService.generateToken(user.getUsername(), user.getRole()))
+				.token(jwtService.generateToken(user.getId(), user.getUsername(), user.getRole()))
 				.username(user.getUsername())
 				.role(user.getRole())
 				.build();

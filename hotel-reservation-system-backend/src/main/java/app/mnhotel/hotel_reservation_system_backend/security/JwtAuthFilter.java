@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import app.mnhotel.hotel_reservation_system_backend.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -21,9 +22,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
 	private final JwtService jwtService;
+	private final UserRepository userRepository;
 
-	public JwtAuthFilter(JwtService jwtService) {
+	public JwtAuthFilter(JwtService jwtService, UserRepository userRepository) {
 		this.jwtService = jwtService;
+		this.userRepository = userRepository;
 	}
 
 	@Override
@@ -33,10 +36,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		if (header != null && header.startsWith("Bearer ")) {
 			try {
 				Claims claims = jwtService.parse(header.substring(7));
-				String role = claims.get("role", String.class);
-				var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null,
-						List.of(new SimpleGrantedAuthority("ROLE_" + role)));
-				SecurityContextHolder.getContext().setAuthentication(auth);
+				// Rol y existencia se toman de la BD, no del token: un usuario eliminado, degradado o
+				// recreado con el mismo nombre (uid distinto) pierde acceso de inmediato.
+				Long uid = claims.get("uid", Long.class);
+				userRepository.findByUsername(claims.getSubject())
+						.filter(u -> u.getId().equals(uid))
+						.ifPresent(u -> SecurityContextHolder.getContext().setAuthentication(
+								new UsernamePasswordAuthenticationToken(u.getUsername(), null,
+										List.of(new SimpleGrantedAuthority("ROLE_" + u.getRole())))));
 			} catch (JwtException | IllegalArgumentException e) {
 				SecurityContextHolder.clearContext(); // token invalido: se trata como anonimo -> 401 donde se requiera
 			}
