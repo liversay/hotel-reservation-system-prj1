@@ -36,8 +36,8 @@ test.describe('rutas con datos o sesión', () => {
   })
 
   test.afterAll(async ({ request }) => {
-    await cleanupHotel(request, admin, hotelId)
     await cleanupUsers(request, admin, `mob${suffix}`)
+    await cleanupHotel(request, admin, hotelId)
   })
 
   test('sin desborde en /my-reservations (con sesión)', async ({ page }) => {
