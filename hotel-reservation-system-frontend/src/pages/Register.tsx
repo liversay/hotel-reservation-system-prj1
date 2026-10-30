@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, tokenStore } from '../api/client'
 import { safeNext, type AuthResponse } from './Login'
+import { friendlyError } from '../utils/errors'
 
 export default function Register() {
   const [form, setForm] = useState({ username: '', email: '', password: '' })
@@ -22,7 +23,7 @@ export default function Register() {
       tokenStore.set(res.token)
       navigate(safeNext(next) ?? '/')
     } catch (err) {
-      setError((err as Error).message)
+      setError(friendlyError(err, { authForm: true }))
     }
   }
 

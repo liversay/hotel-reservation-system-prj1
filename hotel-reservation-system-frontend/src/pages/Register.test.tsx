@@ -33,4 +33,10 @@ describe('Register', () => {
     expect(String(f.mock.calls[0][0])).toMatch(/\/api\/auth\/register$/)
     expect(localStorage.getItem('hotel.token')).toBe('tkn')
   })
+
+  it('con la red caída muestra un mensaje en español', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+    await fill('contraseña123')
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor. Inténtalo de nuevo.')
+  })
 })

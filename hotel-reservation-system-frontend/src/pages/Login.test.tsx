@@ -30,4 +30,25 @@ describe('Login', () => {
     expect(alert).toHaveTextContent('No se pudo conectar con el servidor. Inténtalo de nuevo.')
     expect(alert).not.toHaveTextContent('Failed to fetch')
   })
+
+  const submitWith = async (response: unknown) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response))
+    render(<MemoryRouter><Login /></MemoryRouter>)
+    await userEvent.type(screen.getByLabelText('Usuario'), 'demo')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'mala-clave')
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+    return screen.findByRole('alert')
+  }
+
+  it('un 401 del login muestra "Credenciales inválidas", no "sesión expiró"', async () => {
+    const alert = await submitWith({ ok: false, status: 401, statusText: 'Unauthorized', json: async () => ({ message: 'Credenciales inválidas' }) })
+    expect(alert).toHaveTextContent('Credenciales inválidas')
+    expect(alert).not.toHaveTextContent('sesión expiró')
+  })
+
+  it('un 429 muestra el mensaje del backend', async () => {
+    const msg = 'Demasiados intentos. Inténtalo de nuevo en 15 minutos.'
+    const alert = await submitWith({ ok: false, status: 429, statusText: 'Too Many', json: async () => ({ message: msg }) })
+    expect(alert).toHaveTextContent(msg)
+  })
 })

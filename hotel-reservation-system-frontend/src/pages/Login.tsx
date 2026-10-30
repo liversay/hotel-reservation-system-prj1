@@ -29,7 +29,7 @@ export default function Login() {
       tokenStore.set(res.token)
       navigate(safeNext(next) ?? (res.role === 'ADMIN' ? '/admin' : '/'))
     } catch (err) {
-      setError(friendlyError(err))
+      setError(friendlyError(err, { authForm: true }))
     }
   }
 
