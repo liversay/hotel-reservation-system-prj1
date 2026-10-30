@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { adminToken, API, auth, cleanupHotel, cleanupUsers, loginViaUi, uid } from './helpers'
+import { adminToken, API, auth, cleanupHotel, cleanupUsers, createHotel, createRoom, loginViaUi, uid } from './helpers'
 
 const suffix = uid('a')
 const hotelName = `Hotel ${suffix}`
@@ -18,11 +18,13 @@ test.afterAll(async ({ request }) => {
   await cleanupUsers(request, admin, userName)
 })
 
-async function openAdmin(page: Page, tab: 'hotel' | 'rooms' | 'users') {
+const TAB_LABEL = { hotel: 'Hoteles', rooms: 'Habitaciones', users: 'Usuarios' } as const
+
+async function openAdmin(page: Page, tab: keyof typeof TAB_LABEL) {
   await page.goto('/login')
   await loginViaUi(page, 'admin', 'admin12345')
   await expect(page).toHaveURL(/\/admin$/)
-  await page.locator('aside').getByRole('button', { name: tab, exact: true }).click()
+  await page.locator('aside').getByRole('button', { name: TAB_LABEL[tab], exact: true }).click()
 }
 
 const rowOf = (page: Page, text: string) => page.getByRole('row').filter({ hasText: text })
@@ -36,7 +38,7 @@ test('admin crea, edita y borra un hotel; rating fuera de 1..5 se rechaza', asyn
   await form.getByLabel('Descripción').fill('Creado por E2E')
   await form.getByLabel('Rating').fill('99')
   await form.getByRole('button', { name: 'Guardar' }).click()
-  await expect(page.getByRole('alert')).toContainText('rating')
+  await expect(page.getByRole('alert')).toContainText(/rating|Calificación/i)
   await expect(rowOf(page, hotelName)).toHaveCount(0)
 
   await form.getByLabel('Rating').fill('4')
@@ -49,7 +51,7 @@ test('admin crea, edita y borra un hotel; rating fuera de 1..5 se rechaza', asyn
   await edit.getByLabel('Nombre').fill(hotelRenamed)
   await edit.getByLabel('Rating').fill('0')
   await edit.getByRole('button', { name: 'Guardar' }).click()
-  await expect(page.getByRole('alert')).toContainText('rating') // 0 tampoco es valido
+  await expect(page.getByRole('alert')).toContainText(/rating|Calificación/i) // 0 tampoco es valido
   await edit.getByLabel('Rating').fill('5')
   await edit.getByRole('button', { name: 'Guardar' }).click()
   await expect(rowOf(page, hotelRenamed)).toBeVisible()
@@ -94,6 +96,24 @@ test('admin crea, edita y borra una habitación; precio inválido se rechaza', a
   await rowOf(page, roomNumber).getByRole('button', { name: 'Eliminar' }).click()
   await rowOf(page, roomNumber).getByRole('button', { name: 'Sí' }).click()
   await expect(rowOf(page, roomNumber)).toHaveCount(0)
+})
+
+// Requiere el backend con la Tarea 8a (409 "Ya existe una habitación con ese número en este hotel").
+test('admin: habitación con número duplicado en el mismo hotel muestra el error en español', async ({ page, request }) => {
+  const hotel = `Hotel ${suffix} dup`
+  const dupNumber = `D-${suffix}`
+  const hotelId = await createHotel(request, admin, hotel)
+  await createRoom(request, admin, hotelId, dupNumber)
+
+  await openAdmin(page, 'rooms')
+  await page.getByRole('button', { name: '+ Nuevo' }).click()
+  const form = page.getByRole('form', { name: 'Crear Habitaciones' })
+  await form.getByLabel('Hotel').selectOption({ label: hotel })
+  await form.getByLabel('Número').fill(dupNumber)
+  await form.getByLabel('Tipo').fill('Suite E2E')
+  await form.getByLabel('Precio por noche').fill('90')
+  await form.getByRole('button', { name: 'Guardar' }).click()
+  await expect(page.getByRole('alert')).toContainText('Ya existe una habitación con ese número en este hotel')
 })
 
 test('admin crea, edita y borra un usuario; valida contraseña corta y duplicado', async ({ page }) => {

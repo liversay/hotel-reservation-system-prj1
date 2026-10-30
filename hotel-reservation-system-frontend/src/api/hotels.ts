@@ -1,4 +1,5 @@
 import { api } from './client'
+import { friendlyError as friendlyErrorBase } from '../utils/errors'
 
 export interface Room {
   id: number
@@ -49,7 +50,5 @@ export async function fetchCatalog() {
   return { rooms, hotels: new Map(hotels.map((h) => [h.id, h])) }
 }
 
-/** Traduce errores de red del navegador a un mensaje en español. */
-export function friendlyError(e: Error): string {
-  return e instanceof TypeError ? 'No se pudo conectar con el servidor. Inténtalo de nuevo.' : e.message
-}
+/** Un solo helper de mensajes de error: delega en utils/errors.ts. */
+export const friendlyError = (e: Error): string => friendlyErrorBase(e)

@@ -1,3 +1,4 @@
+import { ADMIN_TABS } from './adminTabs'
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -19,23 +20,23 @@ export default function Sidebar({ isMobileMenuOpen, activeTab, setActiveTab, tog
               </svg>
             </button>
           )}
-        <span className="text-white text-xl font-semibold">Hotel Admin</span>
+        <span className="text-white text-xl font-semibold">Administración</span>
       </div>
       <nav className="mt-8">
-        {['dashboard','hotel', 'rooms', 'users'].map((tab) => (
-          
+        {ADMIN_TABS.map(({ key, label }) => (
+
           <button
-            key={tab}
+            key={key}
             className={`w-full flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-800 ${
-              activeTab === tab ? 'bg-gray-100 text-gray-800' : ''
+              activeTab === key ? 'bg-gray-100 text-gray-800' : ''
             }`}
             onClick={() => {
-              setActiveTab(tab);
+              setActiveTab(key);
               toggleMobileMenu(); // Close mobile menu after selection
             }}
             >
-            <span className="capitalize">{tab}</span>
-            
+            <span>{label}</span>
+
           </button>
         ))}
       </nav>

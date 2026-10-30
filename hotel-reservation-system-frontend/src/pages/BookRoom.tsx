@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
+import { fetchRoom } from '../api/hotels'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import SavedCards, { type PaymentMethod } from '../components/SavedCards'
 import { isAuthenticated } from '../auth/session'
@@ -16,6 +17,7 @@ interface Room {
 
 export default function BookRoom() {
   const { roomId } = useParams()
+  const validId = !!roomId && /^\d+$/.test(roomId)
   const navigate = useNavigate()
   const [room, setRoom] = useState<Room | null>(null)
   const [range, setRange] = useState<Range>({ checkIn: null, checkOut: null })
@@ -27,23 +29,24 @@ export default function BookRoom() {
   const [methodId, setMethodId] = useState<number | null>(null)
 
   useEffect(() => {
-    api<Room>(`/api/rooms/${roomId}`).then(setRoom).catch((e: unknown) => setError(friendlyError(e)))
-  }, [roomId])
+    if (!validId) return
+    fetchRoom(roomId!).then((r) => setRoom(r as Room)).catch((e: unknown) => setError(friendlyError(e)))
+  }, [roomId, validId])
 
   useEffect(() => {
-    if (!loggedIn) return
+    if (!loggedIn || !validId) return
     api<PaymentMethod[]>('/api/payment-methods')
       .then((list) => {
         setMethods(list)
         setMethodId((list.find((m) => m.defaultMethod) ?? list[0])?.id ?? null) // predeterminada preseleccionada
       })
       .catch((e: unknown) => setError(friendlyError(e)))
-  }, [loggedIn])
+  }, [loggedIn, validId])
 
   const nights = range.checkIn && range.checkOut ? nightsBetween(range.checkIn, range.checkOut) : 0
 
   const reserve = async () => {
-    if (!loggedIn) return navigate(`/login?next=/book/${roomId}`)
+    if (!loggedIn) return navigate(`/login?next=${encodeURIComponent(`/book/${roomId}`)}`)
     setError(null)
     try {
       await api('/api/reservations', {
@@ -58,11 +61,20 @@ export default function BookRoom() {
     }
   }
 
+  if (!validId) {
+    return (
+      <main className="mx-auto max-w-xl space-y-3 p-6 text-center">
+        <p className="text-xl font-semibold">Habitación no encontrada</p>
+        <Link to="/products" className="text-blue-700 underline">Volver a habitaciones</Link>
+      </main>
+    )
+  }
+
   return (
     <main className="mx-auto max-w-3xl space-y-4 p-6">
       <Link to="/" className="text-sm text-blue-700 underline">← Inicio</Link>
       <h1 className="text-2xl font-bold">Reservar habitación {room?.roomNumber} {room && `· ${room.type}`}</h1>
-      <AvailabilityCalendar roomId={Number(roomId)} onChange={setRange} refreshKey={refreshKey} />
+      <AvailabilityCalendar roomId={Number(roomId)} onChange={(r) => { setRange(r); setDone(null) }} refreshKey={refreshKey} />
       {nights > 0 && room && (
         <p>{range.checkIn} → {range.checkOut} · {nights} noche(s) · <strong>${nights * room.pricePerNight}</strong></p>
       )}

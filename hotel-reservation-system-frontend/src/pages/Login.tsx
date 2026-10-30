@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, tokenStore } from '../api/client'
+import { friendlyError } from '../utils/errors'
 
 export interface AuthResponse {
   token: string
@@ -28,7 +29,7 @@ export default function Login() {
       tokenStore.set(res.token)
       navigate(safeNext(next) ?? (res.role === 'ADMIN' ? '/admin' : '/'))
     } catch (err) {
-      setError((err as Error).message)
+      setError(friendlyError(err))
     }
   }
 

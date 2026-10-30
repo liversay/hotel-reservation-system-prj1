@@ -74,4 +74,33 @@ describe('AvailabilityCalendar', () => {
     render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
   })
+
+  it('avisa con un mensaje visible cuando el rango cruza días ocupados', async () => {
+    mockMonth([['2030-05-01', 'AVAILABLE'], ['2030-05-02', 'OCCUPIED'], ['2030-05-03', 'AVAILABLE']])
+    render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)
+    await userEvent.click(await screen.findByLabelText('2030-05-01 disponible'))
+    await userEvent.click(screen.getByLabelText('2030-05-03 disponible'))
+    expect(screen.getByRole('alert')).toHaveTextContent('El rango incluye días no disponibles. Elige otras fechas.')
+  })
+
+  it('el aviso de rango inválido desaparece al elegir un rango válido', async () => {
+    mockMonth([['2030-05-01', 'AVAILABLE'], ['2030-05-02', 'OCCUPIED'], ['2030-05-03', 'AVAILABLE'], ['2030-05-04', 'AVAILABLE']])
+    render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)
+    await userEvent.click(await screen.findByLabelText('2030-05-01 disponible'))
+    await userEvent.click(screen.getByLabelText('2030-05-03 disponible')) // inválido: ahora entrada = 03
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('2030-05-04 disponible'))
+    expect(screen.queryByText(/El rango incluye días no disponibles/)).not.toBeInTheDocument()
+  })
+
+  it('la flecha "Mes anterior" está deshabilitada en el mes actual y se habilita al avanzar', async () => {
+    mockMonth([['2030-05-01', 'AVAILABLE']])
+    render(<AvailabilityCalendar roomId={1} onChange={() => {}} />)
+    const prev = screen.getByRole('button', { name: 'Mes anterior' })
+    expect(prev).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Mes siguiente' }))
+    expect(prev).toBeEnabled()
+    await userEvent.click(prev)
+    expect(prev).toBeDisabled()
+  })
 })

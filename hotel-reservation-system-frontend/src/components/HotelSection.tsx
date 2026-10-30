@@ -33,7 +33,7 @@ export default function HotelSection() {
         { name: 'name', label: 'Nombre', required: true },
         { name: 'location', label: 'Ubicación' },
         { name: 'description', label: 'Descripción' },
-        { name: 'rating', label: 'Rating (0-5)', type: 'number' },
+        { name: 'rating', label: 'Rating (1-5)', type: 'number' },
       ]}
       load={load}
       create={create}

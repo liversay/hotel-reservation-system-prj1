@@ -63,3 +63,17 @@ describe('MyReservations', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor. Inténtalo de nuevo.')
   })
 })
+
+describe('MyReservations: fecha local', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs() })
+
+  it('a las 20:00 locales en UTC-5 la reserva de mañana sigue siendo cancelable', async () => {
+    vi.stubEnv('TZ', 'America/Bogota') // UTC-5 fijo
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2030-05-01T20:00:00-05:00') }) // en UTC ya es 2030-05-02
+    const tomorrow = { id: 5, startDate: '2030-05-02', endDate: '2030-05-04', status: 'CONFIRMED', totalPrice: 100, room: { roomNumber: '201', type: 'Doble' } }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => [tomorrow] }))
+    render(<MemoryRouter><MyReservations /></MemoryRouter>)
+    await screen.findByText(/Hab. 201/)
+    expect(screen.getAllByRole('button', { name: 'Cancelar reserva' })).toHaveLength(1)
+  })
+})

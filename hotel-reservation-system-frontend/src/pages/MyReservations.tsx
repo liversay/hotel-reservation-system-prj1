@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { friendlyError } from '../utils/errors'
+import { todayLocal } from '../utils/calendar'
 
 export interface Reservation {
   id: number
@@ -45,7 +46,7 @@ export default function MyReservations() {
     }
   }
 
-  const cancellable = (r: Reservation) => r.status !== 'CANCELLED' && day(r.startDate) > new Date().toISOString().slice(0, 10)
+  const cancellable = (r: Reservation) => r.status !== 'CANCELLED' && day(r.startDate) > todayLocal()
 
   return (
     <main className="mx-auto max-w-3xl space-y-3 p-6">

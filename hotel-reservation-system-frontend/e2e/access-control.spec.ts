@@ -47,7 +47,7 @@ test('cliente (demo) en /admin es redirigido a /', async ({ page, request }) => 
   await useSession(page, await demoToken(request))
   await page.goto('/admin')
   await expect(page).toHaveURL('/')
-  await expect(page.getByText('Hotel Admin')).toHaveCount(0)
+  await expect(page.getByText('Administración', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Administración' })).toHaveCount(0)
 })
 
@@ -93,6 +93,19 @@ for (const path of ['/rooms/..%2Fadmin%2Fusers', '/rooms/abc']) {
     })
     await page.goto(path)
     await expect(page.getByText('Habitación no encontrada')).toBeVisible()
+    expect(apiCalls).toEqual([])
+  })
+}
+
+for (const path of ['/book/..%2Fadmin%2Fusers', '/book/abc']) {
+  test(`${path} muestra "no encontrada" sin llamar al API`, async ({ page }) => {
+    const apiCalls: string[] = []
+    page.on('request', (r) => {
+      if (r.url().includes('/api/rooms') || r.url().includes('/api/admin')) apiCalls.push(r.url())
+    })
+    await page.goto(path)
+    await expect(page.getByText('Habitación no encontrada')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Volver a habitaciones' })).toHaveAttribute('href', '/products')
     expect(apiCalls).toEqual([])
   })
 }

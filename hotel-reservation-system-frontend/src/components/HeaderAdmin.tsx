@@ -1,5 +1,6 @@
 
 import ProfileCircule from './ProfileCircule';
+import { adminTabLabel } from './adminTabs';
 
 interface HeaderProps {
   activeTab: string;
@@ -25,7 +26,7 @@ export default function HeaderAdmin({ activeTab, toggleMobileMenu, isMobileMenuO
             </svg>
           )}
       </button>
-      <h1 className="text-2xl font-semibold capitalize">{activeTab}</h1>
+      <h1 className="text-2xl font-semibold ">{adminTabLabel(activeTab)}</h1>
       <div className="flex items-center">
         <ProfileCircule/>
       </div>

@@ -124,3 +124,14 @@ test('enlaces de navbar y footer no son enlaces muertos', async ({ page }) => {
   await page.getByRole('link', { name: 'Registrarse' }).first().click()
   await expect(page).toHaveURL(/\/register$/)
 })
+
+test('/about está en español, sin Lorem ni "Copyright © 2024" ni imágenes externas', async ({ page }) => {
+  await page.goto('/about')
+  await expect(page.getByRole('heading', { name: 'Sistema de reservas de hotel' })).toBeVisible()
+  const text = (await page.locator('body').textContent()) ?? ''
+  expect(text).not.toMatch(/Lorem/i)
+  expect(text).not.toContain('Copyright © 2024')
+  expect(text).not.toMatch(/Jane Doe|John Smith|Sarah Lee/)
+  const srcs = await page.locator('img').evaluateAll((els) => els.map((e) => e.getAttribute('src') ?? ''))
+  expect(srcs.filter((s) => /^https?:/.test(s))).toEqual([])
+})

@@ -57,7 +57,7 @@ test.describe('rutas con datos o sesión', () => {
   test('sin desborde en /admin (con admin)', async ({ page }) => {
     await useSession(page, admin)
     await page.goto('/admin')
-    await expect(page.getByText('Hotel Admin')).toBeAttached()
+    await expect(page.getByText('Administración', { exact: true })).toBeAttached()
     await expect(page.getByRole('heading').first()).toBeVisible()
     await expectNoOverflow(page)
   })

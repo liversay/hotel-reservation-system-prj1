@@ -38,8 +38,7 @@ export default function Footer() {
               </div>
 
               <p className="mx-auto mt-6 max-w-md text-center leading-relaxed text-gray-500 lg:text-left">
-                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Incidunt consequuntur amet culpa
-                cum itaque neque.
+                Consulta habitaciones, revisa su disponibilidad y reserva en línea.
               </p>
             </div>
 
@@ -61,7 +60,7 @@ export default function Footer() {
           </div>
 
           <p className="mt-12 text-center text-sm text-gray-500 lg:text-right">
-            Copyright &copy; 2024. Todos los derechos reservados.
+            © {new Date().getFullYear()} Sistema de Reservas
           </p>
         </div>
       </footer>

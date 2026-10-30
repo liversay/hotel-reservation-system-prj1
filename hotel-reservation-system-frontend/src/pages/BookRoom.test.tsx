@@ -74,4 +74,32 @@ describe('BookRoom', () => {
     expect(screen.getByRole('button', { name: 'Inicia sesión para reservar' })).toBeInTheDocument()
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/api/payment-methods'))).toBe(false)
   })
+
+  it('el mensaje de reserva confirmada desaparece al elegir nuevas fechas', async () => {
+    setup(() => 'ok')
+    const user = userEvent.setup({ advanceTimers: () => {} })
+    await user.click(await screen.findByLabelText('2030-05-01 disponible'))
+    await user.click(screen.getByLabelText('2030-05-03 disponible'))
+    await user.click(screen.getByRole('button', { name: /Reservar/ }))
+    expect(await screen.findByText('¡Reserva confirmada!')).toBeInTheDocument()
+    await user.click(await screen.findByLabelText('2030-05-03 disponible'))
+    expect(screen.queryByText('¡Reserva confirmada!')).not.toBeInTheDocument()
+  })
+})
+
+describe('BookRoom con id inválido (CSPT)', () => {
+  for (const id of ['..%2Fadmin%2Fusers', 'abc']) {
+    it(`/book/${id} muestra "no encontrada" y no llama a fetch`, () => {
+      const fetchMock = vi.fn(async () => ok({}))
+      vi.stubGlobal('fetch', fetchMock)
+      render(
+        <MemoryRouter initialEntries={[`/book/${id}`]}>
+          <Routes><Route path="/book/:roomId" element={<BookRoom />} /></Routes>
+        </MemoryRouter>,
+      )
+      expect(screen.getByText('Habitación no encontrada')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /habitaciones/i })).toHaveAttribute('href', '/products')
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+  }
 })

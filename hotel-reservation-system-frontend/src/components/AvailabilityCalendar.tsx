@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
 import { friendlyError } from '../utils/errors'
-import { leadingBlanks, selectDay, type DayAvailability, type DayStatus, type Range } from '../utils/calendar'
+import { isRangeFree, leadingBlanks, selectDay, type DayAvailability, type DayStatus, type Range } from '../utils/calendar'
 
 interface Props {
   roomId: number
@@ -25,6 +25,7 @@ export default function AvailabilityCalendar({ roomId, onChange, refreshKey = 0 
   const [days, setDays] = useState<DayAvailability[]>([])
   const [error, setError] = useState<string | null>(null)
   const [range, setRange] = useState<Range>({ checkIn: null, checkOut: null })
+  const [rangeError, setRangeError] = useState<string | null>(null)
 
   const monthKey = `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`
 
@@ -43,6 +44,8 @@ export default function AvailabilityCalendar({ roomId, onChange, refreshKey = 0 
 
   const click = (date: string) => {
     const next = selectDay(range, date, statusByDate)
+    const crossesBusy = !!range.checkIn && !range.checkOut && date > range.checkIn && !isRangeFree(range.checkIn, date, statusByDate)
+    setRangeError(crossesBusy ? 'El rango incluye días no disponibles. Elige otras fechas.' : null)
     if (next !== range) {
       setRange(next)
       onChange(next)
@@ -55,17 +58,20 @@ export default function AvailabilityCalendar({ roomId, onChange, refreshKey = 0 
       return { year: d.getFullYear(), month: d.getMonth() }
     })
 
+  const atCurrentMonth = cursor.year * 12 + cursor.month <= today.getFullYear() * 12 + today.getMonth()
+
   const inRange = (date: string) =>
     !!range.checkIn && date >= range.checkIn && (range.checkOut ? date < range.checkOut : date === range.checkIn)
 
   return (
     <div className="w-full max-w-sm rounded-lg border p-4" aria-label="Calendario de disponibilidad">
       <div className="mb-3 flex items-center justify-between">
-        <button type="button" onClick={() => shiftMonth(-1)} aria-label="Mes anterior" className="px-2">‹</button>
+        <button type="button" onClick={() => shiftMonth(-1)} disabled={atCurrentMonth} aria-label="Mes anterior" className="px-2 disabled:opacity-30">‹</button>
         <h3 className="font-semibold">{MONTHS[cursor.month]} {cursor.year}</h3>
         <button type="button" onClick={() => shiftMonth(1)} aria-label="Mes siguiente" className="px-2">›</button>
       </div>
       {error && <p role="alert" className="text-sm text-red-600">No se pudo cargar la disponibilidad: {error}</p>}
+      {rangeError && <p role="alert" className="mb-2 text-sm text-red-600">{rangeError}</p>}
       <div className="grid grid-cols-7 gap-1 text-center text-sm">
         {WEEKDAYS.map((w) => <div key={w} className="font-medium text-gray-500">{w}</div>)}
         {days.length > 0 && Array.from({ length: leadingBlanks(days[0].date) }, (_, i) => <div key={`b${i}`} />)}

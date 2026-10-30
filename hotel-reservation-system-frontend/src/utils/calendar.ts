@@ -10,6 +10,13 @@ export interface Range {
   checkOut: string | null // dia de salida (exclusivo)
 }
 
+/** Fecha de hoy YYYY-MM-DD en hora local del navegador (no UTC). */
+export function todayLocal(now: Date = new Date()): string {
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${m}-${d}`
+}
+
 /** Dias vacios al inicio para alinear el primer dia del mes (semana empieza en lunes). */
 export function leadingBlanks(firstDay: string): number {
   const dow = new Date(firstDay + 'T00:00:00').getDay() // 0=domingo
