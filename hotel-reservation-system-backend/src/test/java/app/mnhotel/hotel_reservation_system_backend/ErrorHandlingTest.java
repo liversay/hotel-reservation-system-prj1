@@ -117,11 +117,11 @@ class ErrorHandlingTest extends TestSupport {
 		mvc.perform(post("/api/rooms").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"hotelId\":" + hotelId + ",\"roomNumber\":\" \",\"type\":\"Suite\",\"pricePerNight\":200}"))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").value(Matchers.containsString("roomNumber")));
+			.andExpect(jsonPath("$.message").value(Matchers.containsString("Número de habitación")));
 		mvc.perform(post("/api/rooms").header("Authorization", auth).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"hotelId\":" + hotelId + ",\"roomNumber\":\"7\",\"pricePerNight\":200}"))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").value(Matchers.containsString("type")));
+			.andExpect(jsonPath("$.message").value(Matchers.containsString("Tipo")));
 	}
 
 	@Test

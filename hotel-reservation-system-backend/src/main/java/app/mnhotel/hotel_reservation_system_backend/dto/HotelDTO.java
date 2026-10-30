@@ -18,8 +18,8 @@ public class HotelDTO {
 	private String name;
     private String location;
 	private String description;
-	@DecimalMin(value = "1.0", message = "rating debe estar entre 1 y 5")
-	@DecimalMax(value = "5.0", message = "rating debe estar entre 1 y 5")
+	@DecimalMin(value = "1.0", message = "debe estar entre 1 y 5")
+	@DecimalMax(value = "5.0", message = "debe estar entre 1 y 5")
 	private Double rating;
 	
 	// Opcional: Nombres de habitaciones o sus IDs

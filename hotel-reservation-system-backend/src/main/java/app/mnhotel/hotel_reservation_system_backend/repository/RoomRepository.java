@@ -17,6 +17,10 @@ public interface RoomRepository extends JpaRepository<Room,Long> {
 
 	List<Room> findByHotelId(Long hotelId);
 
+	boolean existsByHotelIdAndRoomNumber(Long hotelId, String roomNumber);
+
+	boolean existsByHotelIdAndRoomNumberAndIdNot(Long hotelId, String roomNumber, Long id);
+
 	/** Bloquea la fila de la habitacion para serializar reservas concurrentes sobre ella. */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select r from Room r where r.id = :id")

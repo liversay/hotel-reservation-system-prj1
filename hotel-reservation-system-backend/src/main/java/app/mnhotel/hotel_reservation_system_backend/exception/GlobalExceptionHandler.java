@@ -1,7 +1,9 @@
 package app.mnhotel.hotel_reservation_system_backend.exception;
 
 import java.time.format.DateTimeParseException;
+import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,22 @@ import app.mnhotel.hotel_reservation_system_backend.response.ApiResponse;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+	private static final Map<String, String> FIELD_LABELS = Map.ofEntries(
+			Map.entry("pricePerNight", "Precio por noche"),
+			Map.entry("roomNumber", "Número de habitación"),
+			Map.entry("type", "Tipo"),
+			Map.entry("rating", "Calificación"),
+			Map.entry("expMonth", "Mes de vencimiento"),
+			Map.entry("expYear", "Año de vencimiento"),
+			Map.entry("cardNumber", "Número de tarjeta"),
+			Map.entry("holderName", "Titular"),
+			Map.entry("username", "Usuario"),
+			Map.entry("email", "Correo"),
+			Map.entry("password", "Contraseña"),
+			Map.entry("roomId", "Habitación"),
+			Map.entry("checkIn", "Fecha de entrada"),
+			Map.entry("checkOut", "Fecha de salida"));
+
 	@ExceptionHandler(ResourceNotFoundException.class)
 	ResponseEntity<ApiResponse> notFound(ResourceNotFoundException e) {
 		return build(HttpStatus.NOT_FOUND, e.getMessage());
@@ -29,15 +47,21 @@ public class GlobalExceptionHandler {
 		return build(HttpStatus.CONFLICT, e.getMessage());
 	}
 
-	@ExceptionHandler({ BadRequestException.class, IllegalArgumentException.class })
-	ResponseEntity<ApiResponse> badRequest(RuntimeException e) {
+	@ExceptionHandler(BadRequestException.class)
+	ResponseEntity<ApiResponse> badRequest(BadRequestException e) {
 		return build(HttpStatus.BAD_REQUEST, e.getMessage());
+	}
+
+	/** Mensaje generico: el de una IllegalArgumentException proviene de librerias y no debe filtrarse. */
+	@ExceptionHandler(IllegalArgumentException.class)
+	ResponseEntity<ApiResponse> illegalArgument(IllegalArgumentException e) {
+		return build(HttpStatus.BAD_REQUEST, "Solicitud inválida");
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<ApiResponse> validation(MethodArgumentNotValidException e) {
 		String msg = e.getBindingResult().getFieldErrors().stream()
-				.map(f -> f.getField() + ": " + f.getDefaultMessage()).findFirst().orElse("Solicitud inválida");
+				.map(f -> FIELD_LABELS.getOrDefault(f.getField(), f.getField()) + ": " + f.getDefaultMessage()).findFirst().orElse("Solicitud inválida");
 		return build(HttpStatus.BAD_REQUEST, msg);
 	}
 
@@ -63,7 +87,8 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(TooManyRequestsException.class)
 	ResponseEntity<ApiResponse> tooMany(TooManyRequestsException e) {
-		return build(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).header(HttpHeaders.RETRY_AFTER, "900")
+				.body(new ApiResponse(e.getMessage()));
 	}
 
 	@ExceptionHandler(BadCredentialsException.class)

@@ -24,6 +24,8 @@ import app.mnhotel.hotel_reservation_system_backend.service.RoomService;
 @Service
 public class RoomServiceImp implements RoomService {
 
+	private static final String DUPLICATE_ROOM = "Ya existe una habitación con ese número en este hotel";
+
 	private final RoomRepository roomRepository;
 	private final HotelRepository hotelRepository;
 	private final ReservationRepository reservationRepository;
@@ -66,6 +68,9 @@ public class RoomServiceImp implements RoomService {
 			room.setHotel(hotelRepository.findById(dto.getHotelId())
 					.orElseThrow(() -> new ResourceNotFoundException("Hotel no encontrado: " + dto.getHotelId())));
 		}
+		if (roomRepository.existsByHotelIdAndRoomNumberAndIdNot(room.getHotel().getId(), dto.getRoomNumber(), id)) {
+			throw new ConflictException(DUPLICATE_ROOM);
+		}
 		room.setRoomNumber(dto.getRoomNumber());
 		room.setType(dto.getType());
 		room.setPricePerNight(dto.getPricePerNight());
@@ -96,6 +101,9 @@ public class RoomServiceImp implements RoomService {
 		}
 		Hotel hotel = hotelRepository.findById(dto.getHotelId())
 				.orElseThrow(() -> new ResourceNotFoundException("Hotel no encontrado: " + dto.getHotelId()));
+		if (roomRepository.existsByHotelIdAndRoomNumber(hotel.getId(), dto.getRoomNumber())) {
+			throw new ConflictException(DUPLICATE_ROOM);
+		}
 		Room room = roomRepository.save(Room.builder().hotel(hotel).roomNumber(dto.getRoomNumber())
 				.type(dto.getType()).pricePerNight(dto.getPricePerNight()).availbility(true).build());
 		return toDTO(room);

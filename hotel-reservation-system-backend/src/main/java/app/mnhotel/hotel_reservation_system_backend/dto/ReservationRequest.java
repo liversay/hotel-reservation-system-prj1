@@ -11,13 +11,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationRequest {
-	@NotNull
+	@NotNull(message = "es obligatorio")
 	private Long roomId;
 	/** Primera noche (inclusive). */
-	@NotNull
+	@NotNull(message = "es obligatoria")
 	private LocalDate checkIn;
 	/** Dia de salida (exclusivo: la noche de este dia queda libre). */
-	@NotNull
+	@NotNull(message = "es obligatoria")
 	private LocalDate checkOut;
 	/** Opcional: si se envia, se cobra con el metodo guardado (reserva en un clic). */
 	private Long savedPaymentMethodId;

@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "rooms")
+@Table(name = "rooms", uniqueConstraints = @UniqueConstraint(name = "uk_rooms_hotel_number", columnNames = { "hotel_id", "room_number" }))
 public class Room {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

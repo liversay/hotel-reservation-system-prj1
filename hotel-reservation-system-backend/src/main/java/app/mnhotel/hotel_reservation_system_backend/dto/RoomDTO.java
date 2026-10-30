@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RoomDTO {
 	private Long id;
-    @NotBlank
+    @NotBlank(message = "no puede estar vacío")
     private String roomNumber;
-    @NotBlank
+    @NotBlank(message = "no puede estar vacío")
     private String type;
-    @NotNull
-    @Positive
+    @NotNull(message = "es obligatorio")
+    @Positive(message = "debe ser mayor que 0")
     private Integer pricePerNight;
     private Boolean availability;
 

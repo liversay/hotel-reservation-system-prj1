@@ -37,6 +37,19 @@ class LoginRateLimitTest extends TestSupport {
 	}
 
 	@Test
+	void lockedLoginSendsRetryAfterHeader() throws Exception {
+		registerAndGetToken("rl_retry");
+		for (int i = 0; i < 5; i++) {
+			login("rl_retry", "wrongpass1", "10.9.0.1", 401);
+		}
+		mvc.perform(post("/api/auth/login").with(r -> { r.setRemoteAddr("10.9.0.1"); return r; })
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"username\":\"rl_retry\",\"password\":\"password1\"}"))
+			.andExpect(status().isTooManyRequests())
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "900"));
+	}
+
+	@Test
 	void successfulLoginResetsCounter() throws Exception {
 		registerAndGetToken("rl_reset");
 		for (int i = 0; i < 4; i++) {

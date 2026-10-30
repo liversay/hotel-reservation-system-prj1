@@ -12,12 +12,12 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthRequest {
-	@NotBlank
+	@NotBlank(message = "no puede estar vacío")
 	private String username;
-	@Email
+	@Email(message = "no es un correo válido")
 	private String email; // requerido solo en registro
 	@ToString.Exclude
-	@NotBlank
-	@Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
+	@NotBlank(message = "no puede estar vacía")
+	@Size(min = 8, message = "debe tener al menos 8 caracteres")
 	private String password;
 }

@@ -14,14 +14,14 @@ import lombok.ToString;
 @AllArgsConstructor
 public class PaymentMethodRequest {
 	/** Solo se usa para tokenizar; no se persiste ni se registra. */
-	@NotBlank
+	@NotBlank(message = "no puede estar vacío")
 	@ToString.Exclude
 	private String cardNumber;
-	@NotBlank
+	@NotBlank(message = "no puede estar vacío")
 	private String holderName;
-	@NotNull @Min(1) @Max(12)
+	@NotNull(message = "es obligatorio") @Min(value = 1, message = "debe estar entre 1 y 12") @Max(value = 12, message = "debe estar entre 1 y 12")
 	private Integer expMonth;
-	@NotNull @Min(2000) @Max(2100)
+	@NotNull(message = "es obligatorio") @Min(value = 2000, message = "debe estar entre 2000 y 2100") @Max(value = 2100, message = "debe estar entre 2000 y 2100")
 	private Integer expYear;
 	private boolean makeDefault;
 }
