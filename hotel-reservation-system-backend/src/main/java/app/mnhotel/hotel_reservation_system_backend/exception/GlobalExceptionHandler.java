@@ -35,7 +35,11 @@ public class GlobalExceptionHandler {
 			Map.entry("password", "Contraseña"),
 			Map.entry("roomId", "Habitación"),
 			Map.entry("checkIn", "Fecha de entrada"),
-			Map.entry("checkOut", "Fecha de salida"));
+			Map.entry("checkOut", "Fecha de salida"),
+			Map.entry("hotelId", "Hotel"),
+			Map.entry("name", "Nombre"),
+			Map.entry("location", "Ubicación"),
+			Map.entry("description", "Descripción"));
 
 	@ExceptionHandler(ResourceNotFoundException.class)
 	ResponseEntity<ApiResponse> notFound(ResourceNotFoundException e) {

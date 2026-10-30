@@ -5,6 +5,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,6 +76,12 @@ public class RoomServiceImp implements RoomService {
 		room.setType(dto.getType());
 		room.setPricePerNight(dto.getPricePerNight());
 		if (dto.getAvailability() != null) room.setAvailbility(dto.getAvailability());
+		try {
+			// Fuerza el UPDATE dentro del try: si una peticion concurrente gano la carrera, salta aqui.
+			roomRepository.saveAndFlush(room);
+		} catch (DataIntegrityViolationException ex) {
+			throw new ConflictException(DUPLICATE_ROOM);
+		}
 		return toDTO(room);
 	}
 
@@ -104,8 +111,13 @@ public class RoomServiceImp implements RoomService {
 		if (roomRepository.existsByHotelIdAndRoomNumber(hotel.getId(), dto.getRoomNumber())) {
 			throw new ConflictException(DUPLICATE_ROOM);
 		}
-		Room room = roomRepository.save(Room.builder().hotel(hotel).roomNumber(dto.getRoomNumber())
-				.type(dto.getType()).pricePerNight(dto.getPricePerNight()).availbility(true).build());
+		Room room;
+		try {
+			room = roomRepository.saveAndFlush(Room.builder().hotel(hotel).roomNumber(dto.getRoomNumber())
+					.type(dto.getType()).pricePerNight(dto.getPricePerNight()).availbility(true).build());
+		} catch (DataIntegrityViolationException ex) {
+			throw new ConflictException(DUPLICATE_ROOM);
+		}
 		return toDTO(room);
 	}
 

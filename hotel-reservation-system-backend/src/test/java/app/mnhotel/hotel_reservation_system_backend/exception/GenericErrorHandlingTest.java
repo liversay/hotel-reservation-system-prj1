@@ -20,4 +20,18 @@ class GenericErrorHandlingTest {
 		var res = handler.badRequest(new BadRequestException("Fechas incorrectas"));
 		assertEquals("Fechas incorrectas", res.getBody().getMessage());
 	}
+
+	@Test
+	void validationFallsBackToRawFieldNameForUnmappedField() throws Exception {
+		var target = new Object();
+		var br = new org.springframework.validation.BeanPropertyBindingResult(target, "x");
+		br.addError(new org.springframework.validation.FieldError("x", "campoDesconocido", "no puede estar vacío"));
+		var ex = new org.springframework.web.bind.MethodArgumentNotValidException(
+				new org.springframework.core.MethodParameter(
+						GenericErrorHandlingTest.class.getDeclaredMethod("dummy", String.class), 0), br);
+		assertEquals("campoDesconocido: no puede estar vacío", handler.validation(ex).getBody().getMessage());
+	}
+
+	@SuppressWarnings("unused")
+	private void dummy(String a) { }
 }

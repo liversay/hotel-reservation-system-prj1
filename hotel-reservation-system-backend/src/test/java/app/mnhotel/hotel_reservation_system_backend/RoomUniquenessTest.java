@@ -1,5 +1,6 @@
 package app.mnhotel.hotel_reservation_system_backend;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -68,8 +69,12 @@ class RoomUniquenessTest extends TestSupport {
 		String auth = auth();
 		Long hotelA = newRoom(50).getHotel().getId();
 		Long hotelB = newRoom(50).getHotel().getId();
-		create(auth, hotelA, "77");
-		create(auth, hotelB, "77");
+		long idA = idOf(create(auth, hotelA, "77"));
+		long idB = idOf(create(auth, hotelB, "77"));
+		mvc.perform(get("/api/rooms/" + idA)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.roomNumber").value("77")).andExpect(jsonPath("$.hotelId").value(hotelA));
+		mvc.perform(get("/api/rooms/" + idB)).andExpect(status().isOk())
+			.andExpect(jsonPath("$.roomNumber").value("77")).andExpect(jsonPath("$.hotelId").value(hotelB));
 	}
 
 	@Test
