@@ -56,12 +56,12 @@ public class ReservationServiceImp implements ReservationService {
 		}
 		long nights = ChronoUnit.DAYS.between(req.getCheckIn(), req.getCheckOut());
 		if (nights > MAX_NIGHTS) {
-			throw new BadRequestException("La estancia mÃ¡xima es de " + MAX_NIGHTS + " noches");
+			throw new BadRequestException("La estancia máxima es de " + MAX_NIGHTS + " noches");
 		}
 		SavedPaymentMethod method = null;
 		if (req.getSavedPaymentMethodId() != null) {
 			method = paymentMethodRepository.findByIdAndUserUsername(req.getSavedPaymentMethodId(), username)
-					.orElseThrow(() -> new ResourceNotFoundException("MÃ©todo de pago no encontrado"));
+					.orElseThrow(() -> new ResourceNotFoundException("Método de pago no encontrado"));
 			if (YearMonth.of(method.getExpYear(), method.getExpMonth()).isBefore(YearMonth.from(req.getCheckIn()))) {
 				throw new BadRequestException("La tarjeta vence antes de la fecha de entrada");
 			}
@@ -70,11 +70,11 @@ public class ReservationServiceImp implements ReservationService {
 				.orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 		// Bloqueo de fila: dos reservas simultaneas de la misma habitacion se serializan.
 		Room room = roomRepository.findByIdForUpdate(req.getRoomId())
-				.orElseThrow(() -> new ResourceNotFoundException("HabitaciÃ³n no encontrada: " + req.getRoomId()));
+				.orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada: " + req.getRoomId()));
 		LocalDateTime start = req.getCheckIn().atStartOfDay();
 		LocalDateTime end = req.getCheckOut().atStartOfDay();
 		if (!reservationRepository.findActiveOverlapping(room.getId(), start, end).isEmpty()) {
-			throw new ConflictException("La habitaciÃ³n no estÃ¡ disponible en las fechas elegidas");
+			throw new ConflictException("La habitación no está disponible en las fechas elegidas");
 		}
 		Reservation saved = reservationRepository.save(Reservation.builder()
 				.user(user).room(room).startDate(start).endDate(end)
@@ -107,7 +107,7 @@ public class ReservationServiceImp implements ReservationService {
 			throw new ResourceNotFoundException("Reserva no encontrada: " + id);
 		}
 		if ("CANCELLED".equals(r.getStatus())) {
-			throw new ConflictException("La reserva ya estÃ¡ cancelada");
+			throw new ConflictException("La reserva ya está cancelada");
 		}
 		if (!r.getStartDate().toLocalDate().isAfter(LocalDate.now())) {
 			throw new BadRequestException("No se puede cancelar una reserva ya iniciada o pasada");

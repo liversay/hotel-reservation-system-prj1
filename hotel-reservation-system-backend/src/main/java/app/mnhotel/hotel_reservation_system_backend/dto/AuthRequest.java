@@ -18,6 +18,6 @@ public class AuthRequest {
 	private String email; // requerido solo en registro
 	@ToString.Exclude
 	@NotBlank
-	@Size(min = 8, message = "La contraseÃ±a debe tener al menos 8 caracteres")
+	@Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
 	private String password;
 }

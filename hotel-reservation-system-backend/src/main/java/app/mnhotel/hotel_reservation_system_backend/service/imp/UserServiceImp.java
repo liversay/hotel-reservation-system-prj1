@@ -47,7 +47,7 @@ public class UserServiceImp implements UserService {
 	@Transactional
 	public UserAdminDTO create(UserAdminRequest r) {
 		if (blank(r.getUsername()) || blank(r.getEmail())) throw new BadRequestException("Usuario y email son obligatorios");
-		if (r.getPassword() == null || r.getPassword().length() < 8) throw new BadRequestException("La contraseÃ±a debe tener al menos 8 caracteres");
+		if (r.getPassword() == null || r.getPassword().length() < 8) throw new BadRequestException("La contraseña debe tener al menos 8 caracteres");
 		String role = normalizeRole(r.getRole());
 		if (users.existsByUsername(r.getUsername()) || users.existsByEmail(r.getEmail())) {
 			throw new ConflictException("El usuario o email ya existe");
@@ -73,7 +73,7 @@ public class UserServiceImp implements UserService {
 			u.setRole(role);
 		}
 		if (!blank(r.getPassword())) {
-			if (r.getPassword().length() < 8) throw new BadRequestException("La contraseÃ±a debe tener al menos 8 caracteres");
+			if (r.getPassword().length() < 8) throw new BadRequestException("La contraseña debe tener al menos 8 caracteres");
 			u.setPassword(encoder.encode(r.getPassword()));
 		}
 		return toDTO(u);
@@ -85,7 +85,7 @@ public class UserServiceImp implements UserService {
 		User u = users.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + id));
 		if (u.getUsername().equals(acting)) throw new ConflictException("No puedes eliminar tu propia cuenta");
 		if (reservations.existsByUserId(id)) {
-			throw new ConflictException("No se puede eliminar: el usuario tiene reservas (conservadas para el histÃ³rico)");
+			throw new ConflictException("No se puede eliminar: el usuario tiene reservas (conservadas para el histórico)");
 		}
 		paymentMethods.deleteByUserId(id);
 		users.delete(u);
@@ -93,7 +93,7 @@ public class UserServiceImp implements UserService {
 
 	private static String normalizeRole(String role) {
 		String r = blank(role) ? "USER" : role.toUpperCase();
-		if (!ROLES.contains(r)) throw new BadRequestException("Rol invÃ¡lido: " + role);
+		if (!ROLES.contains(r)) throw new BadRequestException("Rol inválido: " + role);
 		return r;
 	}
 

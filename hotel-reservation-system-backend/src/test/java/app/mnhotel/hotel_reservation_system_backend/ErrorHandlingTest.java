@@ -60,8 +60,31 @@ class ErrorHandlingTest extends TestSupport {
 		Room room = newRoom(100);
 		mvc.perform(get("/api/rooms/" + room.getId() + "/availability").param("month", "bad"))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").value("ParÃ¡metro con formato invÃ¡lido"))
+			.andExpect(jsonPath("$.message").value("Parámetro con formato inválido"))
 			.andExpect(jsonPath("$.trace").doesNotExist());
+	}
+
+	@Test
+	void errorMessagesAreRealUtf8AndNotMojibake() throws Exception {
+		Room room = newRoom(100);
+		String[] bodies = {
+			mvc.perform(get("/api/rooms/" + room.getId() + "/availability").param("month", "bad"))
+				.andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8),
+			mvc.perform(get("/api/rooms/999999")).andExpect(status().isNotFound())
+				.andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8),
+			mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{not json"))
+				.andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8),
+		};
+		for (String b : bodies) {
+			org.junit.jupiter.api.Assertions.assertFalse(b.contains("\u00C3") || b.contains("\u00C2"), "mojibake en: " + b);
+		}
+		org.junit.jupiter.api.Assertions.assertTrue(bodies[0].contains("Parámetro con formato inválido"), bodies[0]);
+		org.junit.jupiter.api.Assertions.assertTrue(bodies[1].contains("Habitación no encontrada"), bodies[1]);
+		// bytes crudos: "á" debe ir como 0xC3 0xA1 (UTF-8), no doble codificada
+		byte[] raw = mvc.perform(get("/api/rooms/" + room.getId() + "/availability").param("month", "bad"))
+			.andReturn().getResponse().getContentAsByteArray();
+		org.junit.jupiter.api.Assertions.assertEquals("Parámetro con formato inválido",
+			new com.fasterxml.jackson.databind.ObjectMapper().readTree(raw).get("message").asText());
 	}
 
 	@Test
